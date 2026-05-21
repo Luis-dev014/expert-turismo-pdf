@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#00294d"/>
+  <title>Expert Turismo Pro</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
+    body{font-family:'DM Sans',sans-serif;background:#07172a;background-image:radial-gradient(ellipse at 16% 0%,rgba(212,175,55,0.08) 0%,transparent 50%),radial-gradient(ellipse at 84% 92%,rgba(0,15,40,0.8) 0%,transparent 55%);color:#e2e8f0;min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+    /* INPUTS */
+    .et-input{width:100%;padding:0.55rem 0.8rem;border-radius:8px;border:1px solid #1e3a5f;background:#071e38;color:#e2e8f0;font-size:0.875rem;outline:none;transition:all 0.18s ease;font-family:inherit;}
+    .et-input::placeholder{color:#4a6580;}
+    .et-input:focus{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,0.12);}
+    .et-input:hover:not(:focus){border-color:#2a4a73;}
+    textarea.et-input{resize:vertical;line-height:1.5;}
+    .et-select{width:100%;padding:0.55rem 0.8rem;border-radius:8px;border:1px solid #1e3a5f;background:#071e38;color:#e2e8f0;font-size:0.875rem;outline:none;font-family:inherit;transition:all 0.18s;cursor:pointer;}
+    .et-select:hover{border-color:#2a4a73;}
+    .et-select:focus{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,0.12);}
+
+    /* CARDS */
+    .et-card{background:#0d2240;border:1px solid #1e3a5f;border-radius:14px;padding:1.1rem;transition:border-color 0.2s;}
+    .et-card:hover{border-color:#2a4a73;box-shadow:0 8px 32px rgba(0,0,0,0.35),0 0 0 1px rgba(212,175,55,0.07);}
+
+    /* BUTTONS */
+    .et-btn-gold{background:linear-gradient(135deg,#d4af37 0%,#e6c14a 100%);color:#00294d;font-weight:700;border:none;cursor:pointer;border-radius:8px;padding:0.55rem 1rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.18s;font-family:inherit;font-size:0.85rem;box-shadow:0 2px 8px rgba(212,175,55,0.18);position:relative;overflow:hidden;}
+    .et-btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 22px rgba(212,175,55,0.44),0 0 0 3px rgba(212,175,55,0.09);}
+    .et-btn-gold:active:not(:disabled){transform:translateY(0);}
+    .et-btn-gold:disabled{background:#6b5a1a;color:#3a3010;cursor:not-allowed;box-shadow:none;}
+    .et-btn-outline{background:transparent;color:#d4af37;font-weight:700;cursor:pointer;border:2px solid #d4af37;border-radius:8px;padding:0.5rem 1rem;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:all 0.18s;}
+    .et-btn-outline:hover{background:rgba(212,175,55,0.12);}
+    .et-btn-ghost{background:#071e38;color:#94a3b8;border:1px solid #1e3a5f;cursor:pointer;border-radius:7px;padding:0.4rem 0.65rem;display:inline-flex;align-items:center;gap:4px;font-size:0.8rem;font-family:inherit;transition:all 0.18s;}
+    .et-btn-ghost:hover{background:#0f2a4a;color:#e2e8f0;border-color:#2a4a73;}
+    .et-btn-danger{background:#2a0a0a;border:1px solid #7f1d1d;color:#ef4444;cursor:pointer;border-radius:7px;padding:0.35rem 0.55rem;font-family:inherit;font-size:0.85rem;transition:all 0.18s;}
+    .et-btn-danger:hover{background:#3b0a0a;}
+
+    /* LABELS */
+    .et-label{display:block;font-size:0.68rem;font-weight:600;color:#64748b;margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.06em;}
+    .et-section-title{color:#d4af37;font-weight:800;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.5rem;text-shadow:0 0 16px rgba(212,175,55,0.25);}
+
+    /* SVC CARD */
+    .et-svccard{border:1px solid #1e3a5f;border-radius:10px;padding:0.85rem;background:linear-gradient(180deg,#071e38 0%,#061a30 100%);transition:border-color 0.22s,box-shadow 0.22s,transform 0.22s,opacity 0.18s;animation:cardEntrance 0.35s ease both;}
+    .et-svccard:hover{border-color:rgba(212,175,55,0.5);box-shadow:0 6px 24px rgba(0,0,0,0.3),0 0 0 1px rgba(212,175,55,0.08);transform:translateY(-2px);}
+    .et-svccard.dragging,.et-svccard.dragging:hover{opacity:0.5;transform:scale(0.98);box-shadow:none;}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;right:24px;padding:0.8rem 1.3rem 1.1rem;border-radius:10px;font-weight:600;color:#fff;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.5);font-family:inherit;animation:slideIn 0.25s ease;font-size:0.88rem;overflow:hidden;min-width:200px;}
+    @keyframes slideIn{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    .spin{animation:spin 1s linear infinite;display:inline-block;}
+    .pulse{animation:pulse 2s ease-in-out infinite;}
+    .fade-in{animation:fadeIn 0.3s ease;}
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar{width:8px;height:8px;}
+    ::-webkit-scrollbar-track{background:#071e38;}
+    ::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px;}
+    ::-webkit-scrollbar-thumb:hover{background:#2a4a73;}
+
+    /* PDF HIDDEN */
+    .pdf-render-area{position:fixed;top:0;left:0;opacity:0;pointer-events:none;z-index:-1;}
+
+    /* RESPONSIVE */
+    .et-main-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+    .et-form-col{display:flex;flex-direction:column;gap:0.85rem;min-width:0;}
+    .et-preview-col{background:linear-gradient(160deg,#051929 0%,#03101d 100%);border-radius:14px;padding:1rem;position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto;min-width:0;border:1px solid rgba(212,175,55,0.1);box-shadow:inset 0 1px 0 rgba(212,175,55,0.07),0 4px 24px rgba(0,0,0,0.3);}
+    @media (max-width:1400px){
+      .et-main-grid{grid-template-columns:1fr 1.05fr;gap:1rem;}
+    }
+    @media (max-width:1100px){
+      .et-main-grid{grid-template-columns:1fr;}
+      .et-preview-col{position:relative;top:0;max-height:none;}
+      .et-header-actions{flex-wrap:wrap;}
+      .et-nav-label{display:none;}
+    }
+    @media (max-width:600px){
+      .et-header-inner{flex-direction:column;align-items:stretch;gap:0.5rem;}
+      .et-brand-text{display:none;}
+    }
+
+    /* ACCORDION */
+    .et-accordion{border:1px solid #1e3a5f;border-radius:14px;background:#0d2240;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;}
+    .et-accordion:hover{border-color:#2a4a73;}
+    .et-accordion.open{border-color:rgba(212,175,55,0.4);box-shadow:0 4px 18px rgba(0,0,0,0.25);}
+    .et-accordion-header{padding:1rem 1.15rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background 0.18s;}
+    .et-accordion-header:hover{background:rgba(212,175,55,0.04);}
+    .et-accordion-title{display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.85rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.06em;font-family:inherit;}
+    .et-accordion-title-icon{font-size:1.15rem;}
+    .et-accordion-badge{background:rgba(212,175,55,0.18);color:#d4af37;font-size:0.65rem;font-weight:900;padding:1px 7px;border-radius:99px;margin-left:6px;letter-spacing:0;}
+    .et-accordion-chevron{transition:transform 0.28s ease;font-size:0.85rem;color:#94a3b8;}
+    .et-accordion.open .et-accordion-chevron{transform:rotate(90deg);color:#d4af37;}
+    .et-accordion-body{max-height:0;overflow:hidden;transition:max-height 0.38s ease;}
+    .et-accordion.open .et-accordion-body{max-height:5000px;}
+    .et-accordion-body-inner{padding:0.5rem 1.15rem 1.1rem;border-top:1px solid rgba(30,58,95,0.6);}
+
+    /* DROPZONE */
+    .et-dropzone{border:2px dashed #1e3a5f;border-radius:9px;padding:10px;transition:all 0.2s ease;background:rgba(7,30,56,0.4);}
+    .et-dropzone.drop-active{border-color:#d4af37;background:rgba(212,175,55,0.07);transform:scale(1.005);}
+    .et-dropzone-hint{font-size:0.65rem;color:#4a6580;text-align:center;margin-top:7px;}
+
+    /* PRESENTATION MODE */
+    .et-presentation{position:fixed;inset:0;background:#020a14;z-index:200;overflow-y:auto;padding:2rem;}
+    .et-presentation-close{position:fixed;top:20px;right:20px;z-index:201;}
+
+    /* MODAL */
+    .et-modal-backdrop{position:fixed;inset:0;background:rgba(2,10,20,0.85);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem;animation:fadeIn 0.2s ease;backdrop-filter:blur(4px);}
+    .et-modal{background:#0d2240;border:1px solid #2a4a73;border-radius:16px;padding:1.5rem;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+
+    /* SECURITY BANNER */
+    .et-sec-banner{background:linear-gradient(90deg,#451a03 0%,#3b0a0a 100%);border:1px solid #92400e;color:#fbbf24;padding:0.65rem 1rem;font-size:0.8rem;display:flex;align-items:center;gap:0.5rem;justify-content:center;}
+    .et-sec-banner button{background:transparent;border:1px solid #92400e;color:#fbbf24;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem;margin-left:0.5rem;}
+    .et-sec-banner button:hover{background:rgba(146,64,14,0.3);}
+
+    /* AUTOSAVE INDICATOR */
+    .et-autosave{display:inline-flex;align-items:center;gap:5px;font-size:0.7rem;color:#94a3b8;}
+    .et-autosave .dot{width:6px;height:6px;border-radius:50%;background:#10b981;}
+    .et-autosave.saving .dot{background:#f59e0b;animation:pulse 1.2s infinite;}
+
+    /* PUBLIC VIEW */
+    .et-public{min-height:100vh;background:linear-gradient(180deg,#07172a 0%,#0a1f3a 100%);padding:2rem 1rem;}
+
+    /* DIVIDER */
+    .et-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent 0%,#1e3a5f 20%,rgba(212,175,55,0.5) 50%,#1e3a5f 80%,transparent 100%);background-size:200% auto;animation:shimmer 3.5s linear infinite;margin:14px 0;border:none;}
+
+    /* ===== DESIGN ENHANCEMENTS ===== */
+    @keyframes cardEntrance{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes shimmer{0%{background-position:-200% center;}100%{background-position:200% center;}}
+    @keyframes toastProgress{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+
+    /* Header glassmorphism */
+    .et-header{background:rgba(0,35,68,0.92)!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);}
+
+    /* Button gold shimmer sweep */
+    .et-btn-gold::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.22) 50%,transparent 60%);transform:translateX(-110%);transition:transform 0.55s ease;}
+    .et-btn-gold:hover:not(:disabled)::after{transform:translateX(110%);}
+
+    /* Toast progress bar */
+    .toast-progress{position:absolute;bottom:0;left:0;height:3px;width:100%;background:rgba(255,255,255,0.45);transform-origin:left;animation:toastProgress 3.5s linear forwards;}
+
+    /* Preview col decorative top bar */
+    .et-preview-col::before{content:'';position:absolute;top:0;left:16px;right:16px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.4) 50%,transparent);pointer-events:none;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<div id="pdf-hidden" class="pdf-render-area"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo} = React;
+
+// ============ FIREBASE ============
+const firebaseConfig = {
+  apiKey: "AIzaSyAPXPxo35WTNXIShXxiJO25ZeXJC45x3cg",
+  authDomain: "expert-turismo---gerador-pdf.firebaseapp.com",
+  projectId: "expert-turismo---gerador-pdf",
+  storageBucket: "expert-turismo---gerador-pdf.firebasestorage.app",
+  messagingSenderId: "10467097337253",
+  appId: "1:10467097337253:web:b2dc0455c76cff541beccc"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ============ FIRESTORE ============
+const DB = {
+  col(uid){ return db.collection('users').doc(uid).collection('quotes'); },
+  async save(uid,q){
+    try{
+      const data={...q,updatedAt:new Date().toISOString()};
+      await DB.col(uid).doc(q.id).set(data);
+      // Espelha pra coleção pública (para o link de share funcionar sem auth)
+      if(q.shareId){
+        await db.collection('shared').doc(q.shareId).set({...data,ownerUid:uid});
+      }
+      return data;
+    }catch(e){console.error('save:',e);return null;}
+  },
+  async list(uid){
+    try{ const snap=await DB.col(uid).orderBy('updatedAt','desc').get(); return snap.docs.map(d=>d.data()); }
+    catch(e){console.error('list:',e);return [];}
+  },
+  async del(uid,id,shareId){
+    try{
+      await DB.col(uid).doc(id).delete();
+      if(shareId){ try{ await db.collection('shared').doc(shareId).delete(); }catch{} }
+      return true;
+    }catch(e){console.error('del:',e);return false;}
+  },
+  async getShared(shareId){
+    try{ const doc=await db.collection('shared').doc(shareId).get(); return doc.exists?doc.data():null; }
+    catch(e){console.error('getShared:',e);return null;}
+  }
+};
+
+// ============ HELPERS ============
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const CURRENCIES = {BRL:{symbol:'R$',locale:'pt-BR'},USD:{symbol:'US$',locale:'en-US'},EUR:{symbol:'€',locale:'de-DE'},GBP:{symbol:'£',locale:'en-GB'}};
+const fmt = (v,c='BRL') => { const cur=CURRENCIES[c]; return `${cur.symbol} ${(Number(v)||0).toLocaleString(cur.locale,{minimumFractionDigits:2,maximumFractionDigits:2})}`; };
+const fmtDate = iso => { if(!iso) return ''; return new Date(iso+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}); };
+const fmtDateShort = iso => { if(!iso) return ''; return new Date(iso+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); };
+const STATUS = {draft:{label:'Rascunho',color:'#64748b'},sent:{label:'Enviada',color:'#3b82f6'},approved:{label:'Aprovada',color:'#10b981'},rejected:{label:'Recusada',color:'#ef4444'}};
+const SVCTYPE = [
+  {value:'hospedagem',label:'🏨 Hospedagem'},
+  {value:'passeio',label:'🎯 Passeio'},
+  {value:'transfer',label:'🚗 Transfer'},
+  {value:'gastronomia',label:'🍽️ Gastronomia'},
+  {value:'voo',label:'✈️ Voo'},
+  {value:'experiencia',label:'✨ Experiência'},
+  {value:'outro',label:'📌 Outro'}
+];
+const newQuoteObj = () => ({id:uid(),title:'Nova Proposta',status:'draft',template:'digital',currency:'BRL',orientation:'portrait',client:{name:'',email:'',phone:''},trip:{destination:'',startDate:todayISO(),endDate:todayISO(),travelers:2,coverImageUrl:''},services:[],notes:'',shareId:uid(),galleryConfig:{columns:3,fixedHeight:true},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+const newSvc = () => ({id:uid(),type:'hospedagem',title:'',description:'',images:[],orientation:'portrait',serviceDate:'',price:0});
+
+function normalizeQuote(q){
+  if(!q) return q;
+  const services = (q.services||[]).map(s=>{
+    if(s.imageUrl && !s.images){ return {...s,images:[s.imageUrl],imageUrl:undefined,orientation:s.orientation||'portrait',serviceDate:s.serviceDate||''}; }
+    return {...s,images:s.images||[],orientation:s.orientation||'portrait',serviceDate:s.serviceDate||''};
+  });
+  return {...q,orientation:q.orientation||'portrait',services,galleryConfig:q.galleryConfig||{columns:3,fixedHeight:true}};
+}
+
+const debounce = (fn,wait)=>{ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),wait); }; };
+
+async function loadImageAsBase64(source){
+  if(typeof source!=='string') return source;
+  if(!source.startsWith('http')) return source;
+  const proxies=[source,`https://wsrv.nl/?url=${encodeURIComponent(source)}&output=jpg`,`https://corsproxy.io/?${encodeURIComponent(source)}`];
+  for(const u of proxies){
+    try{
+      const r=await fetch(u,{mode:'cors'});
+      if(!r.ok) continue;
+      const blob=await r.blob();
+      if(!blob.type.startsWith('image/')) continue;
+      return await new Promise((res,rej)=>{const fr=new FileReader();fr.onloadend=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(blob);});
+    }catch(e){}
+  }
+  return source;
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=ev=>res(ev.target.result);fr.onerror=rej;fr.readAsDataURL(file);});
+}
+
+// ============ GEMINI ============
+// ⚠️ ATENÇÃO: Esta chave fica visível no HTML público. Para produção,
+// crie um proxy (Cloudflare Worker ou Firebase Function) que injete a chave
+// no servidor. Veja README.md para instruções.
+const GEMINI_KEY = 'AIzaSyAeNKg_1RtP49_VtCWU12x2hDSwg643f18';
+
+async function callGemini(prompt,imageBase64=null){
+  const parts = [{text:prompt}];
+  if(imageBase64){
+    const cleanB64 = imageBase64.split(',')[1] || imageBase64;
+    const mimeType = imageBase64.match(/data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+    parts.push({inline_data:{mime_type:mimeType,data:cleanB64}});
+  }
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+    {method:'POST',headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0.9,maxOutputTokens:4096}})}
+  );
+  if(!res.ok){ const e=await res.text(); throw new Error(e); }
+  const d = await res.json();
+  return d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
+}
+
+async function aiGenerate(svc,trip){
+  try{
+    return await callGemini(`Você é um COPYWRITER PREMIUM de turismo de luxo. Escreva uma descrição CONCISA e SEDUTORA em português brasileiro.
+
+ESTRUTURA (3 seções curtas):
+
+🌟 DESTAQUE
+[2 frases elegantes com a essência premium do serviço.]
+
+🎯 EXPERIÊNCIA
+[2 frases sensoriais: cor, aroma ou sensação única.]
+
+✅ INCLUSO
+• [Item 1]
+• [Item 2]
+• [Item 3]
+
+💫 [Frase de impacto final]
+
+DADOS:
+- Tipo: ${svc.type}
+- Título: ${svc.title||svc.type}
+- Destino: ${trip.destination||'destino exclusivo'}
+- Período: ${trip.startDate||''} a ${trip.endDate||''}
+- Viajantes: ${trip.travelers||2} pessoas
+
+REGRAS:
+- MÁXIMO 120 palavras no total
+- NÃO use markdown (sem #, sem ** para negrito)
+- USE emojis e bullets (•) como mostrado acima
+- Português brasileiro impecável
+- Tom premium, direto e sedutor`);
+  }catch(e){ return `Erro IA: ${e.message}`; }
+}
+
+async function aiBeautify(text,type,title){
+  try{
+    return await callGemini(`Você é um FORMATADOR de textos. Sua ÚNICA tarefa é PRESERVAR o texto original e SÓ adicionar formatação visual.
+
+O QUE VOCÊ DEVE FAZER:
+✓ Adicionar emojis relevantes no INÍCIO de cada parágrafo ou frase importante
+✓ Criar quebras de linha entre parágrafos
+✓ Colocar **negrito** (com asteriscos duplos) em palavras-chave
+✓ Adicionar bullets (•) em listas quando fizer sentido
+
+O QUE VOCÊ NÃO PODE FAZER:
+✗ NUNCA reescrever ou parafrasear
+✗ NUNCA mudar nenhuma palavra do texto original
+✗ NUNCA adicionar/remover informações
+
+Tipo: ${type} | Título: ${title}
+
+TEXTO ORIGINAL:
+${text}
+
+Retorne o texto formatado:`);
+  }catch(e){ return text; }
+}
+
+async function aiFlightSummary(imageBase64,textInput,trip){
+  const basePrompt = `Você é um especialista em cotações aéreas. Analise os dados ${imageBase64?'da IMAGEM':'do TEXTO'} de cotação de voos e gere um RESUMO ELEGANTE em português brasileiro.
+
+ESTRUTURA OBRIGATÓRIA:
+
+✈️ INFORMAÇÕES DO VOO
+• Companhia aérea: [nome]
+• Classe: [econômica/executiva/primeira]
+• Trecho: [origem] → [destino]
+
+🛫 IDA
+• Data: [dd/mm/aaaa]
+• Horário: [partida] - [chegada]
+• Duração: [horas]
+• Conexões: [diretas ou descrever paradas]
+
+🛬 VOLTA (se houver)
+• Data: [dd/mm/aaaa]
+• Horário: [partida] - [chegada]
+• Duração: [horas]
+• Conexões: [diretas ou descrever paradas]
+
+🧳 BAGAGEM
+• Mão: [descrição]
+• Despachada: [descrição]
+
+💰 INVESTIMENTO
+• Valor por passageiro: [R$]
+• Total: [R$]
+
+⚠️ OBSERVAÇÕES IMPORTANTES
+• [Política de cancelamento/remarcação]
+
+REGRAS:
+- Use APENAS os dados que aparecem no print/texto
+- Se algum dado não aparecer, escreva "Não informado"
+- NÃO invente nada
+- Destino (contexto): ${trip.destination||'não informado'}`;
+
+  try{
+    if(imageBase64) return await callGemini(basePrompt,imageBase64);
+    return await callGemini(basePrompt + '\n\nTEXTO DA COTAÇÃO:\n' + textInput);
+  }catch(e){ return `Erro IA: ${e.message}`; }
+}
+
+async function aiItinerary(trip,existingServices){
+  try{
+    const days = Math.max(1, Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1);
+    const existing = existingServices.map(s=>`- ${s.title||s.type} (${s.type})`).join('\n') || 'Nenhum';
+    return await callGemini(`Você é um curador de viagens de luxo. Crie um ROTEIRO DIA-A-DIA detalhado em português brasileiro.
+
+VIAGEM:
+- Destino: ${trip.destination||'destino premium'}
+- Período: ${trip.startDate} a ${trip.endDate} (${days} dia${days>1?'s':''})
+- Viajantes: ${trip.travelers}
+
+SERVIÇOS JÁ INCLUSOS (não repetir):
+${existing}
+
+ESTRUTURA OBRIGATÓRIA (um bloco por dia):
+
+📅 DIA 1 — [data dd/mm]
+🌅 Manhã: [atividade com 1-2 frases]
+☀️ Tarde: [atividade com 1-2 frases]
+🌙 Noite: [atividade com 1-2 frases]
+💡 Dica do curador: [insight exclusivo]
+
+[Repita para cada dia]
+
+REGRAS:
+- Sugira experiências autênticas, não turísticas batidas
+- Considere o ritmo (não lote demais)
+- Mencione restaurantes, atrações, momentos especiais reais do destino
+- Tom premium, mas conversacional
+- NÃO use markdown`);
+  }catch(e){ return `Erro IA: ${e.message}`; }
+}
+
+// ============ DOCUMENT EXPORT ROUTER ============
+async function downloadDocument(quote,total,showToast,agency){
+  agency = agency || loadAgency();
+  if(quote.orientation==='landscape'){
+    return downloadPPTX(quote,total,showToast,agency);
+  }
+  return downloadPDF(quote,total,showToast,agency);
+}
+
+// ============ PDF GENERATION ============
+async function downloadPDF(quote,total,showToast,agency){
+  agency = agency || loadAgency();
+  showToast('Preparando PDF...','info');
+  const container = document.getElementById('pdf-hidden');
+  const isPrint = quote.template==='print';
+  container.innerHTML = '';
+
+  const pages = buildPDFPages(quote,total,isPrint,agency);
+
+  for(const p of pages){
+    const div = document.createElement('div');
+    div.style.cssText = `width:${p.orientation==='landscape'?'297mm':'210mm'};height:${p.orientation==='landscape'?'210mm':'297mm'};background:#fff;overflow:hidden;page-break-after:always;`;
+    div.innerHTML = p.html;
+    div.dataset.orientation = p.orientation;
+    container.appendChild(div);
+  }
+
+  await document.fonts.ready;
+  await new Promise(r=>setTimeout(r,1500));
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+
+  const divs = container.children;
+  for(let i=0;i<divs.length;i++){
+    const div = divs[i];
+    const orient = div.dataset.orientation;
+    const w = orient==='landscape'?297:210;
+    const h = orient==='landscape'?210:297;
+
+    showToast(`Renderizando ${i+1} de ${divs.length}...`,'info');
+
+    try{
+      const canvas = await html2canvas(div,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,width:div.offsetWidth,height:div.offsetHeight});
+      const imgData = canvas.toDataURL('image/jpeg',0.94);
+
+      if(i>0) pdf.addPage([w,h],orient);
+      else if(orient==='landscape'){ pdf.deletePage(1); pdf.addPage([w,h],orient); }
+
+      pdf.addImage(imgData,'JPEG',0,0,w,h,undefined,'FAST');
+    }catch(e){ console.error('Erro pág',i,e); }
+  }
+
+  const fname = `Proposta-${quote.client.name||'Cliente'}-${quote.trip.destination||'Viagem'}.pdf`.replace(/[^\w\-.]/g,'_');
+  pdf.save(fname);
+  container.innerHTML = '';
+}
+
+// ============ PPTX GENERATION (16:9 widescreen) ============
+async function downloadPPTX(quote,total,showToast,agency){
+  agency = agency || loadAgency();
+  showToast('Preparando PPTX...','info');
+  if(!window.PptxGenJS){ showToast('Biblioteca PPTX não carregada','err'); return; }
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 13.333" × 7.5"
+  pptx.author = agency.name||'Expert Turismo';
+  pptx.company = agency.name||'Expert Turismo';
+  pptx.title = `Proposta ${quote.trip.destination||''}`;
+
+  const GOLD='D4AF37', NAVY='00294D', WHITE='FFFFFF', SLATE='94A3B8', MUTED='CBD5E1';
+  const W=13.333, H=7.5;
+
+  const logoB64 = agency.logoUrl ? await loadImageAsBase64(agency.logoUrl).catch(()=>null) : null;
+  const coverB64 = quote.trip.coverImageUrl ? await loadImageAsBase64(quote.trip.coverImageUrl).catch(()=>null) : null;
+
+  const addLetterhead = slide => {
+    if(logoB64) slide.addImage({data:logoB64, x:0.3, y:0.18, w:0.55, h:0.55, sizing:{type:'contain',w:0.55,h:0.55}});
+    slide.addText(`${(agency.name||'Expert Turismo')} · ${(agency.tagline||'Viagens sob medida')}`,
+      {x:0.95, y:0.25, w:9, h:0.4, fontSize:9, color:SLATE, fontFace:'DM Sans', valign:'middle'});
+    slide.addShape('rect', {x:0, y:0.82, w:W, h:0.025, fill:{color:GOLD}, line:{type:'none'}});
+  };
+  const addWatermark = slide => {
+    if(logoB64) slide.addImage({data:logoB64, x:5.5, y:2.6, w:2.3, h:2.3, sizing:{type:'contain',w:2.3,h:2.3}, transparency:95});
+  };
+
+  // ============ CAPA ============
+  const cover = pptx.addSlide();
+  if(coverB64){
+    cover.addImage({data:coverB64, x:0, y:0, w:W, h:H, sizing:{type:'cover',w:W,h:H}});
+    cover.addShape('rect', {x:0, y:0, w:W, h:H, fill:{color:NAVY, transparency:45}, line:{type:'none'}});
+  } else {
+    cover.background = { color: NAVY };
+  }
+  cover.addShape('rect', {x:0, y:0, w:W, h:0.07, fill:{color:GOLD}, line:{type:'none'}});
+  cover.addShape('rect', {x:0, y:H-0.07, w:W, h:0.07, fill:{color:GOLD}, line:{type:'none'}});
+
+  if(logoB64){
+    cover.addShape('roundRect', {x:5.66, y:0.9, w:2, h:2, fill:{color:WHITE, transparency:80}, line:{color:GOLD,width:0.5}, rectRadius:0.15});
+    cover.addImage({data:logoB64, x:5.86, y:1.1, w:1.6, h:1.6, sizing:{type:'contain',w:1.6,h:1.6}});
+  }
+  cover.addText((agency.name||'Expert Turismo').toUpperCase(), {x:1, y:3.05, w:W-2, h:0.3, fontSize:11, color:GOLD, align:'center', bold:true, charSpacing:6});
+  cover.addText('PROPOSTA DE VIAGEM', {x:1, y:3.45, w:W-2, h:0.4, fontSize:14, color:GOLD, align:'center', bold:true, charSpacing:5});
+  cover.addText(quote.trip.destination||'Destino dos Sonhos', {x:0.5, y:3.95, w:W-1, h:1.3, fontSize:54, color:WHITE, align:'center', bold:true, fontFace:'Playfair Display'});
+  cover.addShape('rect', {x:6.16, y:5.35, w:1, h:0.04, fill:{color:GOLD}, line:{type:'none'}});
+  cover.addText(quote.client.name||'Cliente', {x:0.5, y:5.55, w:W-1, h:0.5, fontSize:20, color:WHITE, align:'center', fontFace:'Playfair Display'});
+  cover.addText(`${fmtDate(quote.trip.startDate)} — ${fmtDate(quote.trip.endDate)}`, {x:0.5, y:6.15, w:W-1, h:0.3, fontSize:13, color:MUTED, align:'center'});
+  cover.addText(`${quote.trip.travelers} viajante${quote.trip.travelers!==1?'s':''}`, {x:0.5, y:6.45, w:W-1, h:0.3, fontSize:12, color:MUTED, align:'center'});
+  cover.addText(`Proposta nº ${quote.id.slice(0,8).toUpperCase()}`, {x:0.5, y:6.95, w:6, h:0.25, fontSize:9, color:MUTED, align:'left'});
+  cover.addText(`by ${agency.name||'Expert Turismo'}`, {x:W-6.5, y:6.95, w:6, h:0.25, fontSize:9, color:GOLD, align:'right', italic:true});
+
+  // ============ SERVIÇOS ============
+  for(let i=0;i<quote.services.length;i++){
+    const s = quote.services[i];
+    const slide = pptx.addSlide();
+    addLetterhead(slide);
+    addWatermark(slide);
+
+    const imgs = s.images||[];
+    const firstImg = imgs[0] ? await loadImageAsBase64(imgs[0]).catch(()=>null) : null;
+    const hasImg = !!firstImg;
+
+    if(hasImg){
+      slide.addImage({data:firstImg, x:0, y:0.92, w:6.5, h:6.58, sizing:{type:'cover',w:6.5,h:6.58}});
+    }
+
+    const xText = hasImg ? 6.85 : 0.8;
+    const wText = hasImg ? 6.25 : 11.7;
+
+    // Badge index + tipo
+    slide.addShape('rect', {x:xText, y:1.15, w:0.55, h:0.32, fill:{color:GOLD}, line:{type:'none'}});
+    slide.addText(String(i+1).padStart(2,'0'), {x:xText, y:1.15, w:0.55, h:0.32, fontSize:11, color:NAVY, bold:true, align:'center', valign:'middle'});
+    slide.addText(SVCTYPE.find(t=>t.value===s.type)?.label||s.type, {x:xText+0.65, y:1.15, w:wText-0.65, h:0.32, fontSize:10, color:SLATE, bold:true, valign:'middle'});
+
+    // Título
+    slide.addText(s.title||'Serviço', {x:xText, y:1.6, w:wText, h:0.85, fontSize:26, color:NAVY, bold:true, fontFace:'Playfair Display', valign:'top'});
+    slide.addShape('rect', {x:xText, y:2.5, w:0.6, h:0.03, fill:{color:GOLD}, line:{type:'none'}});
+
+    // Data
+    if(s.serviceDate){
+      slide.addText(`📅 ${fmtDate(s.serviceDate)}`, {x:xText, y:2.62, w:wText, h:0.25, fontSize:9.5, color:'64748B'});
+    }
+    // Descrição
+    const descText = (s.description||'Descrição do serviço').replace(/\*\*([^*]+)\*\*/g,'$1');
+    slide.addText(descText, {x:xText, y:2.92, w:wText, h:3.45, fontSize:11, color:'475569', valign:'top', fontFace:'DM Sans'});
+
+    // Valor (rodapé do bloco de texto)
+    slide.addText('VALOR', {x:xText, y:6.55, w:wText, h:0.25, fontSize:9, color:SLATE, align:'right', charSpacing:2});
+    slide.addText(fmt(s.price,quote.currency), {x:xText, y:6.8, w:wText, h:0.55, fontSize:22, color:NAVY, bold:true, align:'right', fontFace:'Playfair Display'});
+
+    // Page counter no topo direito
+    slide.addText(`${i+1} / ${quote.services.length}`, {x:W-1.3, y:0.27, w:1, h:0.3, fontSize:9, color:MUTED, align:'right'});
+  }
+
+  // ============ RESUMO + INVESTIMENTO (unified) ============
+  const final = pptx.addSlide();
+  addLetterhead(final);
+  addWatermark(final);
+
+  final.addText('Resumo & Investimento', {x:0.5, y:1, w:W-1, h:0.55, fontSize:26, color:NAVY, bold:true, fontFace:'Playfair Display'});
+  final.addShape('rect', {x:0.5, y:1.6, w:W-1, h:0.035, fill:{color:GOLD}, line:{type:'none'}});
+
+  // Tabela
+  const tableHeader = [
+    {text:'#', options:{bold:true,color:WHITE,fill:{color:NAVY},fontSize:9}},
+    {text:'Data', options:{bold:true,color:WHITE,fill:{color:NAVY},fontSize:9}},
+    {text:'Serviço', options:{bold:true,color:WHITE,fill:{color:NAVY},fontSize:9}},
+    {text:'Tipo', options:{bold:true,color:WHITE,fill:{color:NAVY},fontSize:9}},
+    {text:'Valor', options:{bold:true,color:WHITE,fill:{color:NAVY},fontSize:9,align:'right'}}
+  ];
+  const sortedSvcs = [...quote.services].sort((a,b)=>{
+    const da=a.serviceDate||quote.trip.startDate, db=b.serviceDate||quote.trip.startDate;
+    return new Date(da)-new Date(db);
+  });
+  const tableData = sortedSvcs.map((s,i)=>[
+    {text:String(i+1).padStart(2,'0'), options:{fontSize:10, color:'64748B'}},
+    {text:s.serviceDate?fmtDateShort(s.serviceDate):'-', options:{fontSize:10, color:'475569'}},
+    {text:s.title||SVCTYPE.find(t=>t.value===s.type)?.label||'', options:{fontSize:10, color:'1E293B', bold:true}},
+    {text:(SVCTYPE.find(t=>t.value===s.type)?.label||'').replace(/^[^\s]+\s/,''), options:{fontSize:10, color:'64748B'}},
+    {text:fmt(s.price,quote.currency), options:{fontSize:10, color:NAVY, bold:true, align:'right'}}
+  ]);
+  final.addTable([tableHeader, ...tableData], {
+    x:0.5, y:1.85, w:W-1,
+    colW:[0.7, 1.4, 6.5, 2.2, 1.5],
+    border:{type:'solid', pt:0.5, color:'F1F5F9'},
+    fontFace:'DM Sans'
+  });
+
+  // Destino info
+  const destY = 1.85 + 0.35 * (tableData.length + 1) + 0.2;
+  final.addShape('rect', {x:0.5, y:destY, w:W-1, h:0.7, fill:{color:'FEF9E7'}, line:{type:'none'}});
+  final.addShape('rect', {x:0.5, y:destY, w:0.08, h:0.7, fill:{color:GOLD}, line:{type:'none'}});
+  final.addText(`📍 ${quote.trip.destination||'Destino'} · ${fmtDate(quote.trip.startDate)} — ${fmtDate(quote.trip.endDate)} · ${quote.trip.travelers} pax`,
+    {x:0.75, y:destY, w:W-1.25, h:0.7, fontSize:11, color:NAVY, bold:true, valign:'middle', fontFace:'DM Sans'});
+
+  // Total card
+  const totalY = 6;
+  final.addShape('roundRect', {x:0.5, y:totalY, w:W-1, h:1.2, fill:{color:NAVY}, line:{type:'none'}, rectRadius:0.12});
+  final.addText('TOTAL', {x:0.9, y:totalY+0.15, w:6, h:0.3, fontSize:10, color:GOLD, charSpacing:3, bold:true});
+  final.addText(fmt(total,quote.currency), {x:0.9, y:totalY+0.45, w:6, h:0.65, fontSize:30, color:WHITE, bold:true, fontFace:'Playfair Display'});
+  if(quote.trip.travelers>0&&total>0){
+    final.addText('Por pessoa', {x:W-5.3, y:totalY+0.25, w:4.6, h:0.3, fontSize:10, color:SLATE, align:'right'});
+    final.addText(fmt(total/quote.trip.travelers,quote.currency), {x:W-5.3, y:totalY+0.55, w:4.6, h:0.5, fontSize:20, color:WHITE, bold:true, align:'right'});
+  }
+
+  final.addText('Valores válidos por 7 dias. Sujeitos a disponibilidade no momento da confirmação.',
+    {x:0.5, y:H-0.4, w:W-1, h:0.3, fontSize:9, color:SLATE, italic:true, align:'center'});
+
+  const fname = `Proposta-${quote.client.name||'Cliente'}-${quote.trip.destination||'Viagem'}.pptx`.replace(/[^\w\-.]/g,'_');
+  await pptx.writeFile({fileName:fname});
+  showToast('PPTX baixado!');
+}
+
+function buildPDFPages(quote,total,isPrint,agency){
+  agency = agency || loadAgency();
+  const orient = quote.orientation||'portrait';
+  const pages = [];
+  pages.push({orientation:orient,html:renderCoverHTML(quote,isPrint,agency)});
+  pages.push(...renderDestinationGalleryHTML(quote,agency));
+  quote.services.forEach((s,i)=>{
+    pages.push({orientation:orient,html:renderServiceHTML(s,i,quote.currency,quote.services.length,agency,orient)});
+  });
+  pages.push({orientation:orient,html:renderSummaryFinancialHTML(quote,total,agency)});
+  return pages;
+}
+
+function renderDestinationGalleryHTML(quote,agency){
+  agency = agency || loadAgency();
+  const gold='#d4af37';
+  const cfg = quote.galleryConfig || {columns:3,fixedHeight:true};
+  const cols = Math.max(2,Math.min(4,cfg.columns||3));
+  const rows = 3;
+  const perPg = cols * rows;
+  const isLandscape = quote.orientation==='landscape';
+  const W = isLandscape?'297mm':'210mm';
+  const H = isLandscape?'210mm':'297mm';
+  const imgH = cfg.fixedHeight ? (isLandscape?'82px':'108px') : 'auto';
+  const objFit = cfg.fixedHeight ? 'cover' : 'contain';
+
+  // Coleta todas as imagens: capa + serviços
+  const imgs = [];
+  if(quote.trip&&quote.trip.coverImageUrl) imgs.push(quote.trip.coverImageUrl);
+  (quote.services||[]).forEach(s=>(s.images||[]).forEach(u=>{if(u) imgs.push(u);}));
+  if(imgs.length===0) return [];
+
+  const letterhead = `<div style="display:flex;align-items:center;gap:8px;padding:7px 30px;border-bottom:2px solid ${gold};background:#fff;">
+    ${agency.logoUrl?`<img src="${agency.logoUrl}" style="height:20px;object-fit:contain;" crossorigin="anonymous"/>`:`<div style="width:20px;height:20px;border-radius:3px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:7px;font-family:Georgia,serif;">ET</div>`}
+    <div style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">${agency.name||'Expert Turismo'} · Galeria do Destino</div>
+  </div>`;
+  const watermark = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" crossorigin="anonymous" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;opacity:0.04;pointer-events:none;z-index:0;object-fit:contain;"/>`
+    : '';
+
+  const totalPgs = Math.ceil(imgs.length/perPg);
+  const pages = [];
+
+  for(let pi=0;pi<imgs.length;pi+=perPg){
+    const block = imgs.slice(pi,pi+perPg);
+    const pgNum = Math.floor(pi/perPg)+1;
+    const pgLabel = totalPgs>1 ? `<span style="font-size:9px;color:#94a3b8;">${pgNum} / ${totalPgs}</span>` : '';
+    const html = `
+    <div style="font-family:'DM Sans',sans-serif;background:#fff;width:${W};height:${H};overflow:hidden;position:relative;">
+      ${watermark}
+      ${letterhead}
+      <div style="padding:16px 30px 14px;position:relative;z-index:1;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid rgba(212,175,55,0.3);">
+          <div>
+            <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:0.12em;color:#94a3b8;margin-bottom:2px;">Galeria do Destino</div>
+            <h2 style="font-size:17px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0;">${quote.trip.destination||'Destino'}</h2>
+          </div>
+          ${pgLabel}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:5px;">
+          ${block.map(url=>`
+            <div style="overflow:hidden;border-radius:4px;background:#f1f5f9;">
+              <img src="${url}" crossorigin="anonymous"
+                   style="width:100%;height:${imgH};object-fit:${objFit};object-position:center;display:block;"/>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:${gold};"></div>
+    </div>`;
+    pages.push({orientation:quote.orientation||'portrait',html});
+  }
+  return pages;
+}
+
+function renderCoverHTML(quote,isPrint,agency){
+  agency = agency || loadAgency();
+  const gold='#d4af37';
+  const isLandscape = quote.orientation==='landscape';
+  const W = isLandscape?'297mm':'210mm';
+  const H = isLandscape?'210mm':'297mm';
+  const heroH = isLandscape?'105mm':'148mm';
+  const bg=isPrint?'#ffffff':'#00294d';
+  const txt=isPrint?'#00294d':'#ffffff';
+  const sub=isPrint?'#64748b':'#94a3b8';
+  const coverImg = quote.trip && quote.trip.coverImageUrl;
+  const logoBigHTML = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" style="height:135px;max-width:360px;object-fit:contain;object-position:center;display:block;" crossorigin="anonymous"/>`
+    : `<div style="width:90px;height:90px;border-radius:18px;background:linear-gradient(135deg,${gold} 0%,#e6c14a 100%);display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:36px;font-family:Georgia,serif;box-shadow:0 8px 24px rgba(212,175,55,0.3);">ET</div>`;
+  const logoSmallHTML = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" style="height:66px;max-width:195px;object-fit:contain;object-position:center;" crossorigin="anonymous"/>`
+    : `<div style="width:44px;height:44px;border-radius:8px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:15px;font-family:Georgia,serif;">ET</div>`;
+  const logoBigContainerStyle = agency.logoUrl
+    ? `display:inline-block;padding:0;background:transparent;border:none;margin-bottom:36px;`
+    : `display:inline-block;padding:32px 40px;background:${isPrint?'rgba(212,175,55,0.06)':'rgba(255,255,255,0.04)'};border:1px solid rgba(212,175,55,0.25);border-radius:18px;margin-bottom:36px;`;
+  const watermarkHTML = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" crossorigin="anonymous" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;opacity:0.05;pointer-events:none;z-index:0;object-fit:contain;"/>`
+    : '';
+  if(coverImg){
+    return `
+    <div style="font-family:'DM Sans',sans-serif;background:${bg};width:${W};height:${H};display:flex;flex-direction:column;position:relative;overflow:hidden;">
+      ${watermarkHTML}
+      <div style="position:absolute;top:0;left:0;right:0;height:5px;background:${gold};z-index:2;"></div>
+      <div style="position:relative;width:100%;height:${heroH};overflow:hidden;flex-shrink:0;">
+        <img src="${coverImg}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" crossorigin="anonymous"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,41,77,0.45) 0%,rgba(0,41,77,0.92) 100%);"></div>
+        <div style="position:absolute;top:24px;left:40px;display:flex;align-items:center;gap:10px;z-index:3;">${logoSmallHTML}<div style="color:rgba(255,255,255,0.8);font-size:11px;"><div style="text-transform:uppercase;letter-spacing:0.15em;">${agency.name||'Expert Turismo'}</div><div>${agency.tagline||'Viagens sob medida'}</div></div></div>
+        <div style="position:absolute;bottom:30px;left:40px;right:40px;z-index:3;">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.3em;color:${gold};margin-bottom:12px;">Proposta de Viagem</div>
+          <h1 style="font-size:${isLandscape?'40px':'44px'};font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#ffffff;margin:0 0 10px;line-height:1.1;">${quote.trip.destination||'Destino dos Sonhos'}</h1>
+          <div style="width:60px;height:2px;background:${gold};"></div>
+        </div>
+      </div>
+      <div style="flex:1;padding:28px 40px 36px;display:flex;flex-direction:column;justify-content:space-between;position:relative;z-index:1;">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:${txt};font-family:'Playfair Display',Georgia,serif;margin-bottom:6px;">${quote.client.name||'Cliente'}</div>
+          <div style="width:40px;height:2px;background:${gold};margin-bottom:10px;"></div>
+          <div style="font-size:13px;color:${sub};margin-bottom:4px;">${fmtDate(quote.trip.startDate)} — ${fmtDate(quote.trip.endDate)}</div>
+          <div style="font-size:13px;color:${sub};">${quote.trip.travelers} viajante${quote.trip.travelers!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+          <div style="font-size:11px;color:${sub};"><div>Proposta nº ${quote.id.slice(0,8).toUpperCase()}</div><div>Emitida em ${fmtDate((quote.createdAt||new Date().toISOString()).slice(0,10))}</div></div>
+          <div style="font-size:11px;font-style:italic;color:${gold};">by ${agency.name||'Expert Turismo'}</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:5px;background:${gold};z-index:2;"></div>
+    </div>`;
+  }
+  // Sem imagem de capa: logo central nobre + área de respiro
+  return `
+  <div style="font-family:'DM Sans',sans-serif;background:${bg};width:${W};height:${H};padding:${isLandscape?'40px 60px':'60px 50px'};display:flex;flex-direction:column;position:relative;overflow:hidden;">
+    ${watermarkHTML}
+    <div style="position:absolute;top:0;left:0;right:0;height:5px;background:${gold};"></div>
+    <div style="position:absolute;left:26px;top:40px;bottom:40px;width:1px;background:linear-gradient(to bottom,transparent,rgba(212,175,55,0.25) 20%,rgba(212,175,55,0.25) 80%,transparent);"></div>
+    <div style="position:absolute;right:26px;top:40px;bottom:40px;width:1px;background:linear-gradient(to bottom,transparent,rgba(212,175,55,0.25) 20%,rgba(212,175,55,0.25) 80%,transparent);"></div>
+
+    <!-- Logo central nobre com respiro -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:1;">
+      <div style="${logoBigContainerStyle}">
+        ${logoBigHTML}
+      </div>
+      <div style="color:${sub};font-size:11px;text-transform:uppercase;letter-spacing:0.25em;margin-bottom:4px;">${agency.name||'Expert Turismo'}</div>
+      <div style="color:${sub};font-size:10px;font-style:italic;margin-bottom:48px;">${agency.tagline||'Viagens sob medida'}</div>
+
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.3em;color:${gold};margin-bottom:22px;">Proposta de Viagem</div>
+      <h1 style="font-size:${isLandscape?'46px':'52px'};font-weight:900;font-family:'Playfair Display',Georgia,serif;color:${txt};margin:0 0 18px;line-height:1.05;max-width:80%;">${quote.trip.destination||'Destino dos Sonhos'}</h1>
+      <div style="width:80px;height:2px;background:${gold};margin:8px auto 24px;"></div>
+      <div style="font-size:22px;color:${txt};font-family:'Playfair Display',Georgia,serif;margin-bottom:10px;">${quote.client.name||'Cliente'}</div>
+      <div style="font-size:13px;color:${sub};">${fmtDate(quote.trip.startDate)} — ${fmtDate(quote.trip.endDate)}</div>
+      <div style="font-size:13px;color:${sub};margin-top:4px;">${quote.trip.travelers} viajante${quote.trip.travelers!==1?'s':''}</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1;">
+      <div style="font-size:11px;color:${sub};"><div>Proposta nº ${quote.id.slice(0,8).toUpperCase()}</div><div>Emitida em ${fmtDate((quote.createdAt||new Date().toISOString()).slice(0,10))}</div></div>
+      <div style="font-size:11px;font-style:italic;color:${gold};">by ${agency.name||'Expert Turismo'}</div>
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:5px;background:${gold};"></div>
+  </div>`;
+}
+
+function renderServiceHTML(s,i,currency,totalSvcs,agency,orient){
+  agency = agency || loadAgency();
+  const gold='#d4af37';
+  const isLandscape = (orient||s.orientation)==='landscape';
+  const w = isLandscape?'297mm':'210mm';
+  const h = isLandscape?'210mm':'297mm';
+  const renderDesc = t => { if(!t) return '<em style="color:#94a3b8">Descrição do serviço...</em>'; return t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>'); };
+
+  let imgsHTML = '';
+  const imgs = s.images || [];
+  const imgStyle = `object-fit:cover;object-position:center;display:block;`;
+  if(imgs.length === 1){
+    imgsHTML = `<img src="${imgs[0]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>`;
+  } else if(imgs.length === 2){
+    imgsHTML = `<div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;">
+      <img src="${imgs[0]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>
+      <img src="${imgs[1]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>
+    </div>`;
+  } else if(imgs.length >= 3){
+    imgsHTML = `
+      <img src="${imgs[0]}" style="width:100%;height:${isLandscape?'110px':'150px'};${imgStyle};margin-bottom:4px;" crossorigin="anonymous"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <img src="${imgs[1]}" style="width:100%;height:${isLandscape?'75px':'95px'};${imgStyle}" crossorigin="anonymous"/>
+        <img src="${imgs[2]}" style="width:100%;height:${isLandscape?'75px':'95px'};${imgStyle}" crossorigin="anonymous"/>
+      </div>`;
+  }
+
+  const letterheadHTML = `<div style="display:flex;align-items:center;gap:8px;padding:7px 30px;border-bottom:2px solid ${gold};background:#fff;">
+    ${agency.logoUrl?`<img src="${agency.logoUrl}" style="height:20px;object-fit:contain;object-position:center;" crossorigin="anonymous"/>`:`<div style="width:20px;height:20px;border-radius:3px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:7px;font-family:Georgia,serif;">ET</div>`}
+    <div style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">${agency.name||'Expert Turismo'} · ${agency.tagline||'Viagens sob medida'}</div>
+    <div style="margin-left:auto;font-size:8px;color:#cbd5e1;">${i+1} / ${totalSvcs}</div>
+  </div>`;
+
+  const watermarkHTML = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" crossorigin="anonymous" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;opacity:0.05;pointer-events:none;z-index:0;object-fit:contain;"/>`
+    : '';
+
+  const dividerHTML = imgsHTML
+    ? `<div style="width:100%;height:2px;background:linear-gradient(90deg,${gold},rgba(212,175,55,0.15) 70%,transparent);"></div>`
+    : '';
+
+  return `
+  <div style="font-family:'DM Sans',sans-serif;background:#fff;width:${w};height:${h};overflow:hidden;position:relative;">
+    ${watermarkHTML}
+    ${letterheadHTML}
+    ${imgsHTML}
+    ${dividerHTML}
+    <div style="padding:18px 40px;position:relative;z-index:1;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:${gold};color:#00294d;font-size:11px;font-weight:900;padding:3px 10px;border-radius:4px;">${String(i+1).padStart(2,'0')}</span>
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">${SVCTYPE.find(t=>t.value===s.type)?.label||s.type}</span>
+        ${s.serviceDate?`<span style="font-size:11px;color:#64748b;margin-left:auto;">📅 ${fmtDate(s.serviceDate)}</span>`:''}
+      </div>
+      <h3 style="font-size:26px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0 0 10px;">${s.title||'Serviço'}</h3>
+      <div style="width:48px;height:2px;background:${gold};margin-bottom:14px;"></div>
+      <p style="color:#475569;line-height:1.75;font-size:13px;margin-bottom:16px;">${renderDesc(s.description)}</p>
+      ${(s.price&&Number(s.price)>0)?`
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid #f1f5f9;padding-top:12px;">
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;">Valor</div>
+          <div style="font-size:22px;font-weight:900;color:#00294d;">${fmt(s.price,currency)}</div>
+        </div>
+      </div>`:'<div style="border-top:1px solid #f1f5f9;padding-top:8px;"></div>'}
+    </div>
+  </div>`;
+}
+
+function renderSummaryFinancialHTML(quote,total,agency){
+  agency = agency || loadAgency();
+  const gold='#d4af37';
+  const isLandscape = quote.orientation==='landscape';
+  const W = isLandscape?'297mm':'210mm';
+  const H = isLandscape?'210mm':'297mm';
+  const svcs = [...quote.services].sort((a,b)=>{
+    const da=a.serviceDate||quote.trip.startDate, db=b.serviceDate||quote.trip.startDate;
+    return new Date(da) - new Date(db);
+  });
+
+  const timeline = svcs.map((s,i)=>`
+    <div style="display:flex;gap:10px;margin-bottom:10px;position:relative;">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${gold};color:#00294d;font-weight:900;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1.5px ${gold};">${String(i+1).padStart(2,'0')}</div>
+        ${i<svcs.length-1?`<div style="width:2px;flex:1;background:${gold};opacity:0.35;margin-top:3px;min-height:18px;"></div>`:''}
+      </div>
+      <div style="flex:1;padding-bottom:3px;">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">${s.serviceDate?fmtDate(s.serviceDate):'Data a definir'}</div>
+        <div style="font-weight:700;color:#00294d;font-size:11.5px;margin-top:1px;line-height:1.25;">${s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</div>
+      </div>
+    </div>
+  `).join('');
+
+  const tableRows = svcs.map((s,i)=>`
+    <tr>
+      <td style="padding:4.5px 7px;border-bottom:1px solid #f1f5f9;font-size:9.5px;color:#64748b;">${String(i+1).padStart(2,'0')}</td>
+      <td style="padding:4.5px 7px;border-bottom:1px solid #f1f5f9;font-size:9.5px;color:#475569;">${s.serviceDate?fmtDateShort(s.serviceDate):'-'}</td>
+      <td style="padding:4.5px 7px;border-bottom:1px solid #f1f5f9;font-size:9.5px;color:#1e293b;font-weight:600;">${s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</td>
+      <td style="padding:4.5px 7px;border-bottom:1px solid #f1f5f9;font-size:9.5px;color:#00294d;font-weight:700;text-align:right;">${fmt(s.price,quote.currency)}</td>
+    </tr>
+  `).join('');
+
+  const finRows = quote.services.map((s,i)=>`
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:11px;color:#475569;">
+      <span><b style="color:#94a3b8;margin-right:6px;">${String(i+1).padStart(2,'0')}</b>${s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</span>
+      <span style="font-weight:700;color:#1e293b;">${fmt(s.price,quote.currency)}</span>
+    </div>`).join('');
+
+  const letterhead = `<div style="display:flex;align-items:center;gap:8px;padding:7px 30px;border-bottom:2px solid ${gold};background:#fff;">
+    ${agency.logoUrl?`<img src="${agency.logoUrl}" style="height:20px;object-fit:contain;object-position:center;" crossorigin="anonymous"/>`:`<div style="width:20px;height:20px;border-radius:3px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:7px;font-family:Georgia,serif;">ET</div>`}
+    <div style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">${agency.name||'Expert Turismo'} · ${agency.tagline||'Viagens sob medida'}</div>
+  </div>`;
+  const watermark = agency.logoUrl
+    ? `<img src="${agency.logoUrl}" crossorigin="anonymous" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;opacity:0.05;pointer-events:none;z-index:0;object-fit:contain;"/>`
+    : '';
+
+  return `
+  <div style="font-family:'DM Sans',sans-serif;background:#fff;width:${W};height:${H};overflow:hidden;position:relative;">
+    ${watermark}
+    ${letterhead}
+    <div style="padding:14px 32px 14px;position:relative;z-index:1;">
+      <div style="border-bottom:2.5px solid ${gold};padding-bottom:8px;margin-bottom:12px;">
+        <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;margin-bottom:2px;">Visão geral da proposta</div>
+        <h2 style="font-size:22px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0;">Resumo da Jornada</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.25fr;gap:18px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:10px;color:#00294d;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">🗓️ Linha do tempo</div>
+          ${timeline}
+        </div>
+        <div>
+          <div style="font-size:10px;color:#00294d;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">📋 Tabela detalhada</div>
+          <table style="width:100%;border-collapse:collapse;background:#fafbfc;border-radius:6px;overflow:hidden;">
+            <thead>
+              <tr style="background:#00294d;color:#fff;">
+                <th style="padding:5px 7px;text-align:left;font-size:8.5px;text-transform:uppercase;">#</th>
+                <th style="padding:5px 7px;text-align:left;font-size:8.5px;text-transform:uppercase;">Data</th>
+                <th style="padding:5px 7px;text-align:left;font-size:8.5px;text-transform:uppercase;">Serviço</th>
+                <th style="padding:5px 7px;text-align:right;font-size:8.5px;text-transform:uppercase;">Valor</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+          <div style="margin-top:10px;background:#fef9e7;border-left:3px solid ${gold};padding:8px 10px;border-radius:5px;">
+            <div style="font-size:9px;color:#7c5e00;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:2px;">📍 ${quote.trip.destination||'Destino'}</div>
+            <div style="font-size:10px;color:#64748b;">${fmtDate(quote.trip.startDate)} — ${fmtDate(quote.trip.endDate)} • ${quote.trip.travelers} pax</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:2.5px solid ${gold};padding-top:10px;margin-top:10px;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;">
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Investimento</div>
+          <h2 style="font-size:20px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0;">Valores</h2>
+        </div>
+        ${finRows}
+        <div style="margin-top:12px;background:#00294d;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${gold};">Total</div><div style="font-size:26px;font-weight:900;color:#fff;">${fmt(total,quote.currency)}</div></div>
+          ${quote.trip.travelers>0&&total>0?`<div style="text-align:right;"><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;">Por pessoa</div><div style="font-size:17px;font-weight:700;color:#fff;">${fmt(total/quote.trip.travelers,quote.currency)}</div></div>`:''}
+        </div>
+        <p style="font-size:9.5px;color:#94a3b8;text-align:center;font-style:italic;margin-top:10px;">Valores válidos por 7 dias. Sujeitos a disponibilidade no momento da confirmação.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============ AGENCY IDENTITY ============
+function loadAgency(){try{return JSON.parse(localStorage.getItem('et-agency')||'null')||{name:'Expert Turismo',tagline:'Viagens sob medida',logoUrl:''};}catch(e){return{name:'Expert Turismo',tagline:'Viagens sob medida',logoUrl:''};}}
+function saveAgency(a){localStorage.setItem('et-agency',JSON.stringify(a));}
+
+function LogoBadge({size=44,agency={}}){
+  const gold='#d4af37';
+  if(agency&&agency.logoUrl){
+    return React.createElement('img',{src:agency.logoUrl,style:{width:size,height:size,borderRadius:8,objectFit:'contain',objectPosition:'center',background:'#fff',padding:3},onError:e=>{e.target.style.display='none';}});
+  }
+  return React.createElement('div',{style:{width:size,height:size,borderRadius:Math.round(size*0.2),background:`linear-gradient(135deg,${gold} 0%,#e6c14a 100%)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#00294d',fontWeight:900,fontSize:Math.round(size*0.37),fontFamily:'Georgia,serif'}},'ET');
+}
+
+function Accordion({title,icon,badge,isOpen,onToggle,children}){
+  return (
+    <div className={`et-accordion ${isOpen?'open':''}`}>
+      <div className="et-accordion-header" onClick={onToggle}>
+        <div className="et-accordion-title">
+          <span className="et-accordion-title-icon">{icon}</span>
+          <span>{title}</span>
+          {badge!=null&&badge!==''&&<span className="et-accordion-badge">{badge}</span>}
+        </div>
+        <span className="et-accordion-chevron">▶</span>
+      </div>
+      <div className="et-accordion-body">
+        <div className="et-accordion-body-inner">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ============ LOGIN SCREEN ============
+function LoginScreen({onLogin}){
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [error,setError]=useState('');
+  const [loading,setLoading]=useState(false);
+  const gold='#d4af37';
+
+  const handleLogin=async(e)=>{
+    e.preventDefault();
+    setError('');setLoading(true);
+    try{
+      const cred=await auth.signInWithEmailAndPassword(email,pass);
+      onLogin(cred.user);
+    }catch(err){
+      const msgs={'auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-email':'Email inválido.','auth/invalid-credential':'Email ou senha incorretos.','auth/too-many-requests':'Muitas tentativas. Aguarde.'};
+      setError(msgs[err.code]||'Erro: '+err.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#07172a 0%,#0a1f3a 100%)',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem'}}>
+      <div style={{width:'100%',maxWidth:420}} className="fade-in">
+        <div style={{textAlign:'center',marginBottom:40}}>
+          <div style={{marginBottom:16,display:'inline-block'}}><LogoBadge size={80} agency={loadAgency()}/></div>
+          <h1 style={{fontFamily:'Playfair Display,Georgia,serif',fontSize:'2rem',fontWeight:900,color:'#fff',margin:'0 0 8px'}}>Expert Turismo Pro</h1>
+          <p style={{color:'#64748b',fontSize:'0.9rem'}}>Faça login para acessar o sistema</p>
+        </div>
+        <form onSubmit={handleLogin} style={{background:'#0d2240',border:'1px solid #1e3a5f',borderRadius:16,padding:'2rem',boxShadow:'0 20px 50px rgba(0,0,0,0.4)'}}>
+          <div style={{marginBottom:18}}>
+            <label className="et-label">Email</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="et-input" placeholder="seu@email.com" required autoFocus style={{padding:'0.75rem'}}/>
+          </div>
+          <div style={{marginBottom:22}}>
+            <label className="et-label">Senha</label>
+            <input type="password" value={pass} onChange={e=>setPass(e.target.value)} className="et-input" placeholder="••••••••" required style={{padding:'0.75rem'}}/>
+          </div>
+          {error&&<div style={{background:'#3b0a0a',border:'1px solid #7f1d1d',color:'#fca5a5',padding:'0.65rem 0.8rem',borderRadius:8,fontSize:'0.82rem',marginBottom:16}}>{error}</div>}
+          <button type="submit" disabled={loading} className="et-btn-gold" style={{width:'100%',justifyContent:'center',padding:'0.8rem',fontSize:'0.95rem'}}>
+            {loading?<span className="spin">⏳</span>:'🔓 Entrar'}
+          </button>
+        </form>
+        <p style={{textAlign:'center',color:'#4a6580',fontSize:'0.75rem',marginTop:20}}>Acesso restrito a vendedores cadastrados.</p>
+      </div>
+    </div>
+  );
+}
+
+// ============ APP ============
+function App(){
+  const [user,setUser]=useState(null);
+  const [authChecked,setAuthChecked]=useState(false);
+  const [view,setView]=useState('editor');
+  const [quote,setQuote]=useState(newQuoteObj());
+  const [allQuotes,setAllQuotes]=useState([]);
+  const [search,setSearch]=useState('');
+  const [filterStatus,setFilterStatus]=useState('all');
+  const [dragId,setDragId]=useState(null);
+  const [aiLoading,setAiLoading]=useState({});
+  const [pdfLoading,setPdfLoading]=useState(false);
+  const [toast,setToast]=useState(null);
+  const [shareQ,setShareQ]=useState(null);
+  const [flightOpen,setFlightOpen]=useState(false);
+  const [itineraryOpen,setItineraryOpen]=useState(false);
+  const [presentationMode,setPresentationMode]=useState(false);
+  const [importOpen,setImportOpen]=useState(false);
+  const [securityDismissed,setSecurityDismissed]=useState(()=>localStorage.getItem('sec-dismissed')==='1');
+  const [autosaveState,setAutosaveState]=useState('idle');
+  const [publicQuote,setPublicQuote]=useState(null);
+  const [publicLoading,setPublicLoading]=useState(false);
+  const [agency,setAgency]=useState(loadAgency);
+  const updateAgency=patch=>{const next={...agency,...patch};setAgency(next);saveAgency(next);};
+  const [openAccordion,setOpenAccordion]=useState('viagem');
+  const toggleAccordion = id => setOpenAccordion(prev=>prev===id?null:id);
+  const [coverInput,setCoverInput]=useState('');
+  const [coverDragOver,setCoverDragOver]=useState(false);
+  const [logoDragOver,setLogoDragOver]=useState(false);
+  const coverFileRef = useRef(null);
+  const logoFileRef = useRef(null);
+
+  useEffect(()=>{
+    const link=document.querySelector("link[rel~='icon']")||(()=>{const l=document.createElement('link');l.rel='icon';document.head.appendChild(l);return l;})();
+    link.href=agency.logoUrl||"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23d4af37'/><text x='16' y='22' text-anchor='middle' fill='%2300294d' font-size='15' font-weight='900' font-family='Georgia'>ET</text></svg>";
+  },[agency.logoUrl]);
+
+  // ============ HASH ROUTING for /p/shareId ============
+  useEffect(()=>{
+    const checkHash = async ()=>{
+      const m = window.location.hash.match(/^#\/p\/([a-z0-9]+)/i);
+      if(m){
+        setPublicLoading(true);
+        const q = await DB.getShared(m[1]);
+        setPublicQuote(q?normalizeQuote(q):null);
+        setPublicLoading(false);
+      } else {
+        setPublicQuote(null);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange',checkHash);
+    return ()=>window.removeEventListener('hashchange',checkHash);
+  },[]);
+
+  useEffect(()=>{ const unsub=auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);}); return ()=>unsub(); },[]);
+  useEffect(()=>{ if(user) DB.list(user.uid).then(qs=>setAllQuotes(qs.map(normalizeQuote))); },[user]);
+
+  const showToast=useCallback((msg,type='ok')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),3500); },[]);
+
+  const persist=useCallback(async q=>{
+    if(!user) return q;
+    const u={...q,updatedAt:new Date().toISOString(),userId:user.uid};
+    await DB.save(user.uid,u);
+    const list=await DB.list(user.uid);
+    setAllQuotes(list.map(normalizeQuote));
+    return u;
+  },[user]);
+
+  // ============ AUTO-SAVE com debounce ============
+  const autoSaveRef = useRef(null);
+  useEffect(()=>{
+    if(!user || !quote.id) return;
+    setAutosaveState('saving');
+    if(autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    autoSaveRef.current = setTimeout(async ()=>{
+      await persist(quote);
+      setAutosaveState('saved');
+      setTimeout(()=>setAutosaveState('idle'),1500);
+    },2500);
+    return ()=>{ if(autoSaveRef.current) clearTimeout(autoSaveRef.current); };
+  },[quote,user,persist]);
+
+  // ============ KEYBOARD SHORTCUTS ============
+  useEffect(()=>{
+    const onKey = (e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); persist(quote).then(()=>showToast('Salvo!')); }
+      if((e.ctrlKey||e.metaKey) && e.key==='n' && view==='editor'){ e.preventDefault(); setQuote(newQuoteObj()); }
+      if(e.key==='Escape'){ setFlightOpen(false); setItineraryOpen(false); setImportOpen(false); setPresentationMode(false); }
+      if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key==='P'){ e.preventDefault(); setPresentationMode(p=>!p); }
+    };
+    window.addEventListener('keydown',onKey);
+    return ()=>window.removeEventListener('keydown',onKey);
+  },[quote,persist,view,showToast]);
+
+  const upQ=p=>setQuote(q=>({...q,...p}));
+  const upClient=p=>setQuote(q=>({...q,client:{...q.client,...p}}));
+  const upTrip=p=>setQuote(q=>({...q,trip:{...q.trip,...p}}));
+  const addSvc=()=>setQuote(q=>({...q,services:[...q.services,newSvc()]}));
+  const upSvc=(id,p)=>setQuote(q=>({...q,services:q.services.map(s=>s.id===id?{...s,...p}:s)}));
+  const delSvc=id=>setQuote(q=>({...q,services:q.services.filter(s=>s.id!==id)}));
+  const dupSvc=id=>setQuote(q=>{ const idx=q.services.findIndex(s=>s.id===id); if(idx<0)return q; const orig=q.services[idx]; const copy={...orig,id:uid(),title:orig.title?orig.title+' (cópia)':''}; const ns=[...q.services]; ns.splice(idx+1,0,copy); return {...q,services:ns}; });
+
+  const onAI=async svc=>{ setAiLoading(s=>({...s,[svc.id]:'gen'})); showToast('Gerando descrição...','info'); const d=await aiGenerate(svc,quote.trip); upSvc(svc.id,{description:d}); setAiLoading(s=>({...s,[svc.id]:false})); showToast('Descrição gerada!'); };
+  const onBeautify=async svc=>{ if(!svc.description.trim()){showToast('Escreva algo primeiro.','warn');return;} setAiLoading(s=>({...s,[svc.id]:'beautify'})); showToast('Formatando...','info'); const d=await aiBeautify(svc.description,svc.type,svc.title); upSvc(svc.id,{description:d}); setAiLoading(s=>({...s,[svc.id]:false})); showToast('Formatado!'); };
+
+  const addImageToSvc = async(svcId,source)=>{
+    const svc = quote.services.find(s=>s.id===svcId);
+    if(!svc) return;
+    if((svc.images||[]).length >= 3){ showToast('Máximo 3 fotos por serviço.','warn'); return; }
+    let b64 = source;
+    if(typeof source === 'string' && source.startsWith('http')){
+      showToast('Carregando imagem...','info');
+      b64 = await loadImageAsBase64(source);
+      if(b64===source) showToast('Imagem adicionada (sem conversão).','warn');
+    }
+    upSvc(svcId,{images:[...(svc.images||[]),b64]});
+    showToast('Imagem adicionada!');
+  };
+  const removeImg = (svcId,idx)=>{ const svc=quote.services.find(s=>s.id===svcId); if(!svc) return; const imgs=[...(svc.images||[])]; imgs.splice(idx,1); upSvc(svcId,{images:imgs}); };
+
+  // ============ Cover image handlers ============
+  const addCoverFromURL = async url => {
+    if(!url) return;
+    showToast('Carregando imagem...','info');
+    const b64 = await loadImageAsBase64(url);
+    upTrip({coverImageUrl:b64});
+    setCoverInput('');
+    showToast('Imagem de capa adicionada!');
+  };
+  const onCoverFile = async e => {
+    const f = e.target.files?.[0]; if(!f) return;
+    if(!f.type.startsWith('image/')){ showToast('Selecione um arquivo de imagem','warn'); return; }
+    const b64 = await fileToBase64(f);
+    upTrip({coverImageUrl:b64});
+    e.target.value='';
+    showToast('Imagem de capa adicionada!');
+  };
+  const onCoverDrop = async e => {
+    e.preventDefault(); e.stopPropagation();
+    setCoverDragOver(false);
+    const f = e.dataTransfer?.files?.[0];
+    if(f && f.type.startsWith('image/')){
+      const b64 = await fileToBase64(f);
+      upTrip({coverImageUrl:b64});
+      showToast('Imagem de capa adicionada!');
+    }
+  };
+
+  // ============ Logo handlers ============
+  const onLogoFile = async e => {
+    const f = e.target.files?.[0]; if(!f) return;
+    if(!f.type.startsWith('image/')){ showToast('Selecione um arquivo de imagem','warn'); return; }
+    const b64 = await fileToBase64(f);
+    updateAgency({logoUrl:b64});
+    e.target.value='';
+    showToast('Logotipo atualizado!');
+  };
+  const onLogoDrop = async e => {
+    e.preventDefault(); e.stopPropagation();
+    setLogoDragOver(false);
+    const f = e.dataTransfer?.files?.[0];
+    if(f && f.type.startsWith('image/')){
+      const b64 = await fileToBase64(f);
+      updateAgency({logoUrl:b64});
+      showToast('Logotipo atualizado!');
+    }
+  };
+
+  const onDragStart=id=>setDragId(id);
+  const onDragOver=e=>e.preventDefault();
+  const onDrop=tid=>{ if(!dragId||dragId===tid)return; setQuote(q=>{const s=[...q.services];const fi=s.findIndex(x=>x.id===dragId),ti=s.findIndex(x=>x.id===tid);const[m]=s.splice(fi,1);s.splice(ti,0,m);return{...q,services:s};}); setDragId(null); };
+  const save=async()=>{ const s=await persist(quote); setQuote(s); showToast('Proposta salva!'); };
+  const loadQ=q=>{ setQuote(normalizeQuote(q)); setView('editor'); };
+  const dupQ=async q=>{ const d={...q,id:uid(),shareId:uid(),title:q.title+' (cópia)',status:'draft',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; await persist(d); showToast('Duplicada!'); };
+  const delQ=async (id,shareId)=>{ if(!confirm('Excluir?'))return; await DB.del(user.uid,id,shareId); const list=await DB.list(user.uid); setAllQuotes(list.map(normalizeQuote)); showToast('Excluída'); };
+  const onPDF=async()=>{ setPdfLoading(true); try{ await downloadDocument(quote,total,showToast,agency); if(quote.orientation!=='landscape') showToast('PDF baixado!'); }catch(e){console.error(e); showToast('Erro: '+e.message,'err'); } setPdfLoading(false); };
+  const logout=()=>auth.signOut();
+
+  const importServicesFrom = (sourceQuote, selectedIds)=>{
+    const toImport = sourceQuote.services.filter(s=>selectedIds.includes(s.id)).map(s=>({...s,id:uid()}));
+    setQuote(q=>({...q,services:[...q.services,...toImport]}));
+    showToast(`${toImport.length} serviço(s) importado(s)!`);
+    setImportOpen(false);
+  };
+
+  const total=quote.services.reduce((s,x)=>s+(Number(x.price)||0),0);
+  const filtered=allQuotes.filter(q=>{ const t=search.toLowerCase(); const ok=!t||q.title.toLowerCase().includes(t)||q.client.name.toLowerCase().includes(t)||q.trip.destination.toLowerCase().includes(t); return ok&&(filterStatus==='all'||q.status===filterStatus); });
+
+  // ============ PUBLIC SHARE VIEW (read-only) ============
+  if(window.location.hash.match(/^#\/p\//)){
+    if(publicLoading) return <div style={{minHeight:'100vh',background:'#07172a',display:'flex',alignItems:'center',justifyContent:'center',color:'#d4af37'}}>⏳ Carregando proposta...</div>;
+    if(!publicQuote) return <div style={{minHeight:'100vh',background:'#07172a',display:'flex',alignItems:'center',justifyContent:'center',color:'#ef4444',padding:'2rem',textAlign:'center'}}>Proposta não encontrada ou expirou.</div>;
+    const pubTotal = publicQuote.services.reduce((s,x)=>s+Number(x.price||0),0);
+    return <PublicView quote={publicQuote} total={pubTotal} agency={loadAgency()}/>;
+  }
+
+  if(!authChecked) return (<div style={{minHeight:'100vh',background:'#07172a',display:'flex',alignItems:'center',justifyContent:'center',color:'#d4af37',fontSize:'1.2rem'}}><span className="spin">⏳</span>&nbsp;Carregando...</div>);
+  if(!user) return React.createElement(LoginScreen,{onLogin:setUser});
+  if(view==='share'&&shareQ) return React.createElement(ShareView,{quote:shareQ,total:shareQ.services.reduce((s,x)=>s+(Number(x.price)||0),0),onBack:()=>setView('editor'),showToast});
+
+  const gold='#d4af37';
+
+  return (
+    <div style={{minHeight:'100vh',background:'#07172a',color:'#e2e8f0'}}>
+      {!securityDismissed && (
+        <div className="et-sec-banner">
+          <span>⚠️</span>
+          <span><b>Atenção:</b> a chave da Gemini está no HTML público. Mova para um proxy antes de divulgar o link.</span>
+          <button onClick={()=>{localStorage.setItem('sec-dismissed','1');setSecurityDismissed(true);}}>Entendi</button>
+        </div>
+      )}
+
+      <header className="et-header" style={{borderBottom:`3px solid ${gold}`,position:'sticky',top:0,zIndex:20}}>
+        <div className="et-header-inner" style={{maxWidth:1600,margin:'0 auto',padding:'0.875rem 1.5rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <LogoBadge size={42} agency={agency}/>
+            <div className="et-brand-text">
+              <div style={{fontWeight:700,fontSize:'1.05rem',fontFamily:'Playfair Display,Georgia,serif',color:'#fff'}}>{agency.name||'Expert Turismo Pro'}</div>
+              <div style={{fontSize:'0.7rem',color:'#94a3b8',display:'flex',alignItems:'center',gap:8}}>
+                <span>👤 {user.email}</span>
+                <span className={`et-autosave ${autosaveState==='saving'?'saving':''}`}>
+                  <span className="dot"/>
+                  {autosaveState==='saving'?'salvando':autosaveState==='saved'?'salvo':'auto-save'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <nav style={{display:'flex',gap:4}}>
+            {[{id:'editor',label:'Editor',icon:'✏️'},{id:'history',label:'Histórico',icon:'📚',badge:allQuotes.length}].map(n=>(
+              <button key={n.id} onClick={()=>setView(n.id)}
+                style={{display:'flex',alignItems:'center',gap:6,padding:'0.45rem 0.9rem',borderRadius:7,border:'none',cursor:'pointer',fontWeight:600,fontSize:'0.85rem',background:view===n.id?gold:'transparent',color:view===n.id?'#00294d':'#94a3b8',fontFamily:'inherit',transition:'all 0.18s'}}>
+                <span>{n.icon}</span><span className="et-nav-label">{n.label}</span>
+                {n.badge>0&&<span style={{background:view===n.id?'#00294d':gold,color:view===n.id?gold:'#00294d',fontSize:'0.65rem',fontWeight:900,padding:'1px 6px',borderRadius:99}}>{n.badge}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className="et-header-actions" style={{display:'flex',gap:8}}>
+            <button onClick={()=>setItineraryOpen(true)} className="et-btn-ghost" style={{borderColor:'#7c3aed',color:'#a78bfa'}} title="Gerar dia-a-dia">🗓️</button>
+            <button onClick={()=>setFlightOpen(true)} className="et-btn-ghost" style={{borderColor:'#1e40af',color:'#60a5fa'}} title="IA Aérea">✈️</button>
+            <button onClick={()=>setImportOpen(true)} className="et-btn-ghost" title="Importar de outra proposta">📥</button>
+            <button onClick={()=>setPresentationMode(true)} className="et-btn-ghost" title="Modo apresentação (Ctrl+Shift+P)">🎬</button>
+            <button onClick={()=>setQuote(newQuoteObj())} className="et-btn-ghost" title="Nova (Ctrl+N)">+ Nova</button>
+            <button onClick={save} className="et-btn-gold" title="Salvar (Ctrl+S)">💾 Salvar</button>
+            <button onClick={logout} className="et-btn-danger" title="Sair">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <main style={{maxWidth:1600,margin:'0 auto',padding:'1.25rem'}}>
+        {view==='editor'&&(
+          <div className="et-main-grid">
+            <div className="et-form-col">
+
+              {/* ============ ACCORDION 1: IDENTIDADE VISUAL ============ */}
+              <Accordion title="Identidade Visual" icon="🏢" isOpen={openAccordion==='identidade'} onToggle={()=>toggleAccordion('identidade')}>
+                <div style={{fontSize:'0.7rem',color:'#4a6580',marginBottom:10}}>Logotipo, marca e formato de saída • salvo neste dispositivo</div>
+
+                <label className="et-label">Nome da Agência</label>
+                <input value={agency.name} onChange={e=>updateAgency({name:e.target.value})} className="et-input" style={{marginBottom:10}}/>
+
+                <label className="et-label">Slogan / Tagline</label>
+                <input value={agency.tagline} onChange={e=>updateAgency({tagline:e.target.value})} className="et-input" style={{marginBottom:10}}/>
+
+                <label className="et-label">🎨 Logotipo</label>
+                {agency.logoUrl && (
+                  <div style={{position:'relative',marginBottom:6,background:'#fff',borderRadius:7,padding:6,display:'inline-block'}}>
+                    <img src={agency.logoUrl} style={{height:56,maxWidth:180,objectFit:'contain',objectPosition:'center',display:'block'}} onError={e=>{e.target.style.display='none';}}/>
+                    <button onClick={()=>updateAgency({logoUrl:''})} style={{position:'absolute',top:-6,right:-6,width:22,height:22,borderRadius:'50%',background:'#ef4444',border:'2px solid #0d2240',color:'#fff',cursor:'pointer',fontSize:11,padding:0,lineHeight:1}}>×</button>
+                  </div>
+                )}
+                <div className={`et-dropzone ${logoDragOver?'drop-active':''}`}
+                  onDragOver={e=>{e.preventDefault();e.stopPropagation();setLogoDragOver(true);}}
+                  onDragLeave={()=>setLogoDragOver(false)}
+                  onDrop={onLogoDrop}>
+                  <input type="url" value={agency.logoUrl} onChange={e=>updateAgency({logoUrl:e.target.value})} className="et-input" placeholder="URL do logotipo..."/>
+                  <div style={{display:'flex',gap:4,marginTop:6}}>
+                    <button onClick={()=>logoFileRef.current?.click()} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>📁 Upload do PC</button>
+                    <input ref={logoFileRef} type="file" accept="image/*" style={{display:'none'}} onChange={onLogoFile}/>
+                  </div>
+                  <div className="et-dropzone-hint">ou arraste o arquivo aqui</div>
+                </div>
+
+                <label className="et-label" style={{marginTop:14}}>🖥️ Modelo Visual</label>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+                  {[{id:'digital',label:'🖥️ Digital',desc:'Capa azul marinho'},{id:'print',label:'🖨️ Impressão',desc:'Capa branca'}].map(t=>(
+                    <button key={t.id} onClick={()=>upQ({template:t.id})}
+                      style={{background:quote.template===t.id?'rgba(212,175,55,0.13)':'#071e38',border:`2px solid ${quote.template===t.id?gold:'#1e3a5f'}`,borderRadius:9,padding:'0.65rem',textAlign:'left',cursor:'pointer',transition:'all 0.18s'}}>
+                      <div style={{color:quote.template===t.id?gold:'#94a3b8',fontWeight:700,fontSize:'0.82rem',marginBottom:2}}>{t.label} {quote.template===t.id?'✓':''}</div>
+                      <div style={{fontSize:'0.7rem',color:'#4a6580'}}>{t.desc}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <label className="et-label">📐 Formato de Saída</label>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  {[{id:'portrait',label:'📄 Retrato',desc:'PDF A4 vertical'},{id:'landscape',label:'🎬 Paisagem',desc:'PPTX 16:9 widescreen'}].map(t=>(
+                    <button key={t.id} onClick={()=>upQ({orientation:t.id})}
+                      style={{background:quote.orientation===t.id?'rgba(212,175,55,0.13)':'#071e38',border:`2px solid ${quote.orientation===t.id?gold:'#1e3a5f'}`,borderRadius:9,padding:'0.65rem',textAlign:'left',cursor:'pointer',transition:'all 0.18s'}}>
+                      <div style={{color:quote.orientation===t.id?gold:'#94a3b8',fontWeight:700,fontSize:'0.82rem',marginBottom:2}}>{t.label} {quote.orientation===t.id?'✓':''}</div>
+                      <div style={{fontSize:'0.7rem',color:'#4a6580'}}>{t.desc}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <hr className="et-divider" style={{marginTop:14}}/>
+                <div className="et-section-title"><span>🖼️</span> Galeria no PDF</div>
+                <div style={{fontSize:'0.66rem',color:'#4a6580',marginBottom:10}}>Aparece após a capa — reúne a imagem de capa e fotos dos serviços</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:6}}>
+                  <div>
+                    <label className="et-label">Colunas</label>
+                    <select className="et-select"
+                      value={(quote.galleryConfig||{columns:3}).columns}
+                      onChange={e=>upQ({galleryConfig:{...(quote.galleryConfig||{fixedHeight:true}),columns:Number(e.target.value)}})}>
+                      <option value={2}>2 colunas</option>
+                      <option value={3}>3 colunas</option>
+                      <option value={4}>4 colunas</option>
+                    </select>
+                  </div>
+                  <div style={{display:'flex',alignItems:'flex-end',paddingBottom:4}}>
+                    <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:'0.82rem',color:'#94a3b8',userSelect:'none'}}>
+                      <input type="checkbox"
+                        checked={(quote.galleryConfig||{fixedHeight:true}).fixedHeight!==false}
+                        onChange={e=>upQ({galleryConfig:{...(quote.galleryConfig||{columns:3}),fixedHeight:e.target.checked}})}
+                        style={{cursor:'pointer',width:14,height:14,accentColor:gold}}/>
+                      Altura fixa
+                    </label>
+                  </div>
+                </div>
+              </Accordion>
+
+              {/* ============ ACCORDION 2: DADOS DA VIAGEM ============ */}
+              <Accordion title="Dados da Viagem" icon="✈️" isOpen={openAccordion==='viagem'} onToggle={()=>toggleAccordion('viagem')}>
+                <label className="et-label">Título da Proposta</label>
+                <input type="text" value={quote.title} onChange={e=>upQ({title:e.target.value})} className="et-input" placeholder="Ex: Lua de Mel em Paris" style={{marginBottom:10}}/>
+
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                  <div><label className="et-label">Status</label>
+                    <select value={quote.status} onChange={e=>upQ({status:e.target.value})} className="et-select">
+                      {Object.entries(STATUS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                    </select></div>
+                  <div><label className="et-label">Moeda</label>
+                    <select value={quote.currency} onChange={e=>upQ({currency:e.target.value})} className="et-select">
+                      {Object.keys(CURRENCIES).map(k=><option key={k} value={k}>{k} ({CURRENCIES[k].symbol})</option>)}
+                    </select></div>
+                </div>
+
+                <hr className="et-divider"/>
+
+                <div className="et-section-title" style={{marginBottom:8}}><span>👤</span> Cliente</div>
+                <label className="et-label">Nome</label>
+                <input type="text" value={quote.client.name} onChange={e=>upClient({name:e.target.value})} className="et-input" style={{marginBottom:10}}/>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                  <div><label className="et-label">Email</label><input type="email" value={quote.client.email} onChange={e=>upClient({email:e.target.value})} className="et-input"/></div>
+                  <div><label className="et-label">Telefone</label><input type="text" value={quote.client.phone} onChange={e=>upClient({phone:e.target.value})} className="et-input"/></div>
+                </div>
+
+                <hr className="et-divider"/>
+
+                <div className="et-section-title" style={{marginBottom:8}}><span>🗺️</span> Roteiro</div>
+                <label className="et-label">Destino</label>
+                <input type="text" value={quote.trip.destination} onChange={e=>upTrip({destination:e.target.value})} className="et-input" placeholder="Ex: Paris, França" style={{marginBottom:10}}/>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 80px',gap:10,marginBottom:12}}>
+                  <div><label className="et-label">Início</label><input type="date" value={quote.trip.startDate} onChange={e=>upTrip({startDate:e.target.value})} className="et-input"/></div>
+                  <div><label className="et-label">Fim</label><input type="date" value={quote.trip.endDate} onChange={e=>upTrip({endDate:e.target.value})} className="et-input"/></div>
+                  <div><label className="et-label">Pax</label><input type="number" min="1" value={quote.trip.travelers} onChange={e=>upTrip({travelers:Number(e.target.value)})} className="et-input"/></div>
+                </div>
+
+                <label className="et-label">🖼️ Imagem de Capa</label>
+                {quote.trip.coverImageUrl && (
+                  <div style={{position:'relative',marginBottom:8}}>
+                    <img src={quote.trip.coverImageUrl} style={{width:'100%',height:120,objectFit:'cover',objectPosition:'center',borderRadius:7,display:'block'}} onError={e=>{e.target.style.display='none';}}/>
+                    <button onClick={()=>upTrip({coverImageUrl:''})} style={{position:'absolute',top:6,right:6,width:24,height:24,borderRadius:'50%',background:'rgba(0,0,0,0.7)',border:'none',color:'#fff',cursor:'pointer',fontSize:13,padding:0,lineHeight:1}}>×</button>
+                  </div>
+                )}
+                <div className={`et-dropzone ${coverDragOver?'drop-active':''}`}
+                  onDragOver={e=>{e.preventDefault();e.stopPropagation();setCoverDragOver(true);}}
+                  onDragLeave={()=>setCoverDragOver(false)}
+                  onDrop={onCoverDrop}>
+                  <div style={{display:'flex',gap:4,marginBottom:4}}>
+                    <input type="text" value={coverInput} onChange={e=>setCoverInput(e.target.value)} className="et-input" placeholder="URL da imagem..." style={{flex:1,fontSize:'0.78rem'}}
+                      onKeyDown={e=>{if(e.key==='Enter'&&coverInput) addCoverFromURL(coverInput);}}/>
+                    <button onClick={()=>addCoverFromURL(coverInput)} className="et-btn-ghost">⬇</button>
+                  </div>
+                  <div style={{display:'flex',gap:4}}>
+                    <button onClick={()=>window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent((quote.trip.destination||'destino')+' paisagem turismo luxo')}`,'_blank')} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>🔍 Buscar no Google</button>
+                    <button onClick={()=>coverFileRef.current?.click()} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>📁 Upload</button>
+                    <input ref={coverFileRef} type="file" accept="image/*" style={{display:'none'}} onChange={onCoverFile}/>
+                  </div>
+                  <div className="et-dropzone-hint">ou arraste uma imagem aqui</div>
+                </div>
+
+                <hr className="et-divider"/>
+
+                <div className="et-section-title" style={{marginBottom:6}}><span>📝</span> Notas Internas</div>
+                <div style={{fontSize:'0.66rem',color:'#4a6580',marginBottom:6}}>Não aparecem no PDF nem no link público</div>
+                <textarea value={quote.notes} onChange={e=>upQ({notes:e.target.value})} rows={3} className="et-input" placeholder="Observações da equipe..."/>
+              </Accordion>
+
+              {/* ============ ACCORDION 3: SERVIÇOS ============ */}
+              <Accordion title="Serviços" icon="🎯" badge={quote.services.length} isOpen={openAccordion==='servicos'} onToggle={()=>toggleAccordion('servicos')}>
+                <div style={{display:'flex',gap:6,marginBottom:12}}>
+                  <button onClick={()=>setItineraryOpen(true)} className="et-btn-ghost" style={{flex:1,justifyContent:'center',borderColor:'#7c3aed',color:'#a78bfa'}}>✨ IA Dia-a-dia</button>
+                  <button onClick={()=>setImportOpen(true)} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>📥 Importar</button>
+                </div>
+
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                  {quote.services.map((s,i)=>(
+                    <SvcCard key={s.id} svc={s} idx={i} currency={quote.currency}
+                      aiState={aiLoading[s.id]}
+                      onUp={p=>upSvc(s.id,p)} onDel={()=>delSvc(s.id)} onDup={()=>dupSvc(s.id)}
+                      onAI={()=>onAI(s)} onBeautify={()=>onBeautify(s)}
+                      onAddImg={src=>addImageToSvc(s.id,src)} onRemoveImg={idx=>removeImg(s.id,idx)}
+                      onDragStart={()=>onDragStart(s.id)} onDragOver={onDragOver} onDrop={()=>onDrop(s.id)}
+                      isDragging={dragId===s.id}
+                    />
+                  ))}
+                </div>
+
+                <button onClick={addSvc}
+                  style={{marginTop:10,width:'100%',padding:'0.7rem',border:'2px dashed #1e3a5f',borderRadius:9,background:'transparent',color:'#4a6580',cursor:'pointer',fontWeight:600,fontSize:'0.85rem',fontFamily:'inherit',transition:'all 0.18s'}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=gold;e.currentTarget.style.color=gold;e.currentTarget.style.background='rgba(212,175,55,0.04)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor='#1e3a5f';e.currentTarget.style.color='#4a6580';e.currentTarget.style.background='transparent';}}>
+                  + Adicionar serviço
+                </button>
+
+                <hr className="et-divider"/>
+
+                <div style={{borderColor:'rgba(212,175,55,0.25)',background:'linear-gradient(135deg,#0d2240 0%,#102a4f 100%)',padding:'0.85rem 1rem',borderRadius:10,border:'1px solid rgba(212,175,55,0.25)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <div style={{fontSize:'0.7rem',color:'#64748b',textTransform:'uppercase',letterSpacing:'0.05em'}}>Total da proposta</div>
+                      <div style={{fontSize:'1.9rem',fontWeight:900,color:gold,fontFamily:'Playfair Display,Georgia,serif'}}>{fmt(total,quote.currency)}</div>
+                    </div>
+                    <div style={{textAlign:'right',color:'#64748b',fontSize:'0.75rem'}}>
+                      <div>{quote.services.length} serviço{quote.services.length!==1?'s':''}</div>
+                      {quote.trip.travelers>0&&total>0&&<div>{fmt(total/quote.trip.travelers,quote.currency)} / pax</div>}
+                    </div>
+                  </div>
+                </div>
+              </Accordion>
+
+              {/* Botões de ação (sempre visíveis) */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:6}}>
+                <button className="et-btn-outline" onClick={async()=>{await persist(quote);setShareQ(quote);setView('share');}} style={{justifyContent:'center',padding:'0.85rem'}}>🔗 Compartilhar</button>
+                <button className="et-btn-gold" onClick={onPDF} disabled={pdfLoading} style={{justifyContent:'center',padding:'0.85rem'}}>
+                  {pdfLoading?<span className="spin">⏳</span>:(quote.orientation==='landscape'?'🎬 Gerar PPTX':'📄 Gerar PDF')}
+                </button>
+              </div>
+            </div>
+
+            <div className="et-preview-col">
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{fontSize:'0.7rem',color:'#4a6580',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+                  👁️ Live Preview — {quote.orientation==='landscape'?'Paisagem 16:9':'Retrato A4'} · {quote.template==='digital'?'Digital':'Impressão'}
+                </div>
+                <button onClick={()=>setPresentationMode(true)} className="et-btn-ghost" title="Modo apresentação">🎬 Apresentar</button>
+              </div>
+              <PDFPreview quote={quote} total={total} agency={agency}/>
+            </div>
+          </div>
+        )}
+
+        {view==='history'&&(
+          <HistoryView quotes={filtered} search={search} setSearch={setSearch}
+            filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+            loadQ={loadQ} dupQ={dupQ} delQ={delQ}
+            openShare={async q=>{await persist(q);setShareQ(q);setView('share');}}/>
+        )}
+      </main>
+
+      {flightOpen && <FlightAIModal onClose={()=>setFlightOpen(false)} trip={quote.trip} onInsert={(text)=>{
+        const newService = {...newSvc(),type:'voo',title:'Voo (gerado por IA)',description:text};
+        setQuote(q=>({...q,services:[...q.services,newService]}));
+        setFlightOpen(false);
+        showToast('Resumo de voo adicionado!');
+      }}/>}
+
+      {itineraryOpen && <ItineraryModal onClose={()=>setItineraryOpen(false)} trip={quote.trip} services={quote.services} onInsert={(text)=>{
+        const newService = {...newSvc(),type:'experiencia',title:'Roteiro dia-a-dia',description:text,orientation:'portrait'};
+        setQuote(q=>({...q,services:[...q.services,newService]}));
+        setItineraryOpen(false);
+        showToast('Roteiro adicionado como serviço!');
+      }}/>}
+
+      {importOpen && <ImportModal onClose={()=>setImportOpen(false)} quotes={allQuotes.filter(q=>q.id!==quote.id)} onImport={importServicesFrom}/>}
+
+      {presentationMode && <PresentationMode quote={quote} total={total} onClose={()=>setPresentationMode(false)}/>}
+
+      {toast&&(
+        <div className="toast" style={{background:toast.type==='err'?'#dc2626':toast.type==='info'?'#2563eb':toast.type==='warn'?'#d97706':'#059669'}}>
+          {toast.msg}
+          <div className="toast-progress"/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ PUBLIC VIEW (link compartilhado) ============
+function PublicView({quote,total,agency}){
+  agency = agency || loadAgency();
+  return (
+    <div className="et-public">
+      <div style={{maxWidth:900,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:30,paddingBottom:20,borderBottom:'1px solid #1e3a5f'}}>
+          <div style={{marginBottom:12,display:'inline-block'}}><LogoBadge size={64} agency={agency}/></div>
+          <h1 style={{fontFamily:'Playfair Display,Georgia,serif',color:'#fff',fontSize:'1.6rem',margin:'0 0 4px'}}>Sua Proposta de Viagem</h1>
+          <p style={{color:'#94a3b8',fontSize:'0.85rem'}}>Por {agency.name||'Expert Turismo'}</p>
+        </div>
+        <PDFPreview quote={quote} total={total}/>
+        <div style={{marginTop:30,padding:20,background:'#0d2240',borderRadius:12,textAlign:'center',color:'#94a3b8',fontSize:'0.85rem'}}>
+          💬 Gostou da proposta? Entre em contato com seu consultor para confirmar.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ PRESENTATION MODE ============
+function PresentationMode({quote,total,onClose}){
+  return (
+    <div className="et-presentation fade-in">
+      <button onClick={onClose} className="et-btn-gold et-presentation-close">✕ Sair (Esc)</button>
+      <div style={{maxWidth:900,margin:'0 auto'}}>
+        <PDFPreview quote={quote} total={total}/>
+      </div>
+    </div>
+  );
+}
+
+// ============ ITINERARY MODAL ============
+function ItineraryModal({onClose,trip,services,onInsert}){
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState('');
+  const gold='#d4af37';
+
+  const generate=async()=>{
+    if(!trip.destination){ alert('Defina um destino primeiro'); return; }
+    setLoading(true); setResult('');
+    try{ const r = await aiItinerary(trip,services); setResult(r); }
+    catch(e){ setResult('Erro: '+e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="et-modal-backdrop" onClick={onClose}>
+      <div className="et-modal" onClick={e=>e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <h2 style={{color:gold,fontFamily:'Playfair Display,Georgia,serif',fontSize:'1.4rem',fontWeight:900,margin:0}}>🗓️ IA — Roteiro Dia-a-Dia</h2>
+          <button onClick={onClose} style={{background:'transparent',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:24}}>×</button>
+        </div>
+        <p style={{color:'#94a3b8',fontSize:'0.85rem',marginBottom:16}}>
+          A IA vai criar um roteiro detalhado dia-a-dia baseado no destino, datas e nos serviços já cadastrados (pra não repetir).
+        </p>
+        <div style={{background:'#071e38',border:'1px solid #1e3a5f',borderRadius:8,padding:'0.85rem',marginBottom:14,fontSize:'0.82rem'}}>
+          <div style={{color:'#64748b',marginBottom:6}}>Vai gerar com base em:</div>
+          <div style={{color:'#e2e8f0'}}>📍 <b>{trip.destination||'❌ defina o destino'}</b></div>
+          <div style={{color:'#e2e8f0'}}>📅 {fmtDate(trip.startDate)} → {fmtDate(trip.endDate)}</div>
+          <div style={{color:'#e2e8f0'}}>👥 {trip.travelers} viajante(s) • {services.length} serviço(s) já cadastrados</div>
+        </div>
+        <button onClick={generate} disabled={loading||!trip.destination} className="et-btn-gold" style={{width:'100%',justifyContent:'center',padding:'0.8rem',marginBottom:14}}>
+          {loading?<><span className="spin">⏳</span>&nbsp;Criando roteiro...</>:'✨ Gerar roteiro com IA'}
+        </button>
+        {result && (
+          <div style={{background:'#071e38',border:'1px solid #1e3a5f',borderRadius:8,padding:'1rem',marginBottom:14}}>
+            <div style={{color:gold,fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',marginBottom:8}}>Resultado:</div>
+            <pre style={{whiteSpace:'pre-wrap',color:'#e2e8f0',fontSize:'0.85rem',fontFamily:'inherit',margin:0,maxHeight:300,overflowY:'auto'}}>{result}</pre>
+            <button onClick={()=>onInsert(result)} className="et-btn-gold" style={{marginTop:12,width:'100%',justifyContent:'center'}}>
+              ✓ Adicionar como serviço
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ IMPORT MODAL ============
+function ImportModal({onClose,quotes,onImport}){
+  const [selectedQ,setSelectedQ]=useState(null);
+  const [selectedIds,setSelectedIds]=useState([]);
+  const gold='#d4af37';
+
+  const toggle = id => setSelectedIds(ids=>ids.includes(id)?ids.filter(x=>x!==id):[...ids,id]);
+
+  return (
+    <div className="et-modal-backdrop" onClick={onClose}>
+      <div className="et-modal" onClick={e=>e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <h2 style={{color:gold,fontFamily:'Playfair Display,Georgia,serif',fontSize:'1.4rem',fontWeight:900,margin:0}}>📥 Importar Serviços</h2>
+          <button onClick={onClose} style={{background:'transparent',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:24}}>×</button>
+        </div>
+
+        {!selectedQ ? (
+          <div>
+            <p style={{color:'#94a3b8',fontSize:'0.85rem',marginBottom:14}}>Escolha uma proposta de origem:</p>
+            {quotes.length===0 ? (
+              <div style={{textAlign:'center',padding:'2rem',color:'#64748b'}}>Nenhuma outra proposta disponível.</div>
+            ) : (
+              <div style={{maxHeight:400,overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
+                {quotes.map(q=>(
+                  <button key={q.id} onClick={()=>setSelectedQ(q)} style={{textAlign:'left',background:'#071e38',border:'1px solid #1e3a5f',borderRadius:8,padding:'0.75rem',cursor:'pointer',color:'#e2e8f0',transition:'all 0.18s'}} onMouseEnter={e=>e.currentTarget.style.borderColor=gold} onMouseLeave={e=>e.currentTarget.style.borderColor='#1e3a5f'}>
+                    <div style={{fontWeight:700,marginBottom:2}}>{q.title}</div>
+                    <div style={{fontSize:'0.75rem',color:'#94a3b8'}}>{q.client.name||'Sem cliente'} • {q.trip.destination||'Sem destino'} • {q.services.length} serviço(s)</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <button onClick={()=>{setSelectedQ(null);setSelectedIds([]);}} className="et-btn-ghost" style={{marginBottom:12}}>← Voltar</button>
+            <p style={{color:'#94a3b8',fontSize:'0.85rem',marginBottom:12}}>Marque os serviços que deseja importar de <b style={{color:'#fff'}}>{selectedQ.title}</b>:</p>
+            <div style={{maxHeight:350,overflowY:'auto',display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
+              {selectedQ.services.map(s=>(
+                <label key={s.id} style={{display:'flex',alignItems:'center',gap:10,background:'#071e38',border:`1px solid ${selectedIds.includes(s.id)?gold:'#1e3a5f'}`,borderRadius:8,padding:'0.6rem',cursor:'pointer',transition:'all 0.18s'}}>
+                  <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={()=>toggle(s.id)} style={{cursor:'pointer'}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,color:'#e2e8f0',fontSize:'0.88rem'}}>{s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</div>
+                    <div style={{fontSize:'0.72rem',color:'#94a3b8'}}>{SVCTYPE.find(t=>t.value===s.type)?.label} • {fmt(s.price,selectedQ.currency)}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <button onClick={()=>onImport(selectedQ,selectedIds)} disabled={selectedIds.length===0} className="et-btn-gold" style={{width:'100%',justifyContent:'center',padding:'0.75rem'}}>
+              Importar {selectedIds.length} serviço(s)
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ FLIGHT AI MODAL ============
+function FlightAIModal({onClose,trip,onInsert}){
+  const [tab,setTab]=useState('image');
+  const [imgB64,setImgB64]=useState('');
+  const [text,setText]=useState('');
+  const [result,setResult]=useState('');
+  const [loading,setLoading]=useState(false);
+  const fileRef=useRef(null);
+  const gold='#d4af37';
+
+  const onFile=(file)=>{
+    if(!file) return;
+    const r=new FileReader();
+    r.onload=e=>setImgB64(e.target.result);
+    r.readAsDataURL(file);
+  };
+
+  const generate=async()=>{
+    if(tab==='image' && !imgB64){ alert('Faça upload da imagem primeiro'); return; }
+    if(tab==='text' && !text.trim()){ alert('Cole o texto da cotação primeiro'); return; }
+    setLoading(true); setResult('');
+    try{
+      const r = await aiFlightSummary(tab==='image'?imgB64:null, tab==='text'?text:null, trip);
+      setResult(r);
+    }catch(e){ setResult('Erro: '+e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="et-modal-backdrop" onClick={onClose}>
+      <div className="et-modal" onClick={e=>e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <h2 style={{color:gold,fontFamily:'Playfair Display,Georgia,serif',fontSize:'1.4rem',fontWeight:900,margin:0}}>✈️ IA de Cotação Aérea</h2>
+          <button onClick={onClose} style={{background:'transparent',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:24}}>×</button>
+        </div>
+        <p style={{color:'#94a3b8',fontSize:'0.85rem',marginBottom:16}}>Upload do print ou cole o texto. A IA formata no padrão profissional.</p>
+
+        <div style={{display:'flex',gap:6,marginBottom:14,borderBottom:'1px solid #1e3a5f',paddingBottom:8}}>
+          <button onClick={()=>setTab('image')} style={{flex:1,padding:'0.5rem',borderRadius:6,border:'none',cursor:'pointer',fontWeight:700,fontSize:'0.85rem',background:tab==='image'?gold:'transparent',color:tab==='image'?'#00294d':'#94a3b8'}}>📷 Upload</button>
+          <button onClick={()=>setTab('text')} style={{flex:1,padding:'0.5rem',borderRadius:6,border:'none',cursor:'pointer',fontWeight:700,fontSize:'0.85rem',background:tab==='text'?gold:'transparent',color:tab==='text'?'#00294d':'#94a3b8'}}>📝 Texto</button>
+        </div>
+
+        {tab==='image' ? (
+          <div style={{marginBottom:14}}>
+            {imgB64 ? (
+              <div style={{position:'relative'}}>
+                <img src={imgB64} alt="" style={{width:'100%',maxHeight:300,objectFit:'contain',borderRadius:8,background:'#071e38'}}/>
+                <button onClick={()=>setImgB64('')} style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,0.7)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer',padding:'4px 10px'}}>✕ Trocar</button>
+              </div>
+            ) : (
+              <button onClick={()=>fileRef.current?.click()} style={{width:'100%',padding:'2rem',border:`2px dashed ${gold}`,borderRadius:10,background:'#071e38',color:gold,cursor:'pointer',fontWeight:700}}>
+                📷 Clique para selecionar imagem
+              </button>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>onFile(e.target.files?.[0])}/>
+          </div>
+        ) : (
+          <textarea value={text} onChange={e=>setText(e.target.value)} rows={8} className="et-input" placeholder="Cole aqui o texto da cotação..." style={{marginBottom:14}}/>
+        )}
+
+        <button onClick={generate} disabled={loading} className="et-btn-gold" style={{width:'100%',justifyContent:'center',padding:'0.75rem',marginBottom:14}}>
+          {loading?<><span className="spin">⏳</span>&nbsp;Analisando...</>:'✨ Gerar resumo formatado'}
+        </button>
+
+        {result && (
+          <div style={{background:'#071e38',border:'1px solid #1e3a5f',borderRadius:8,padding:'1rem',marginBottom:14}}>
+            <div style={{color:gold,fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',marginBottom:8}}>Resultado:</div>
+            <pre style={{whiteSpace:'pre-wrap',color:'#e2e8f0',fontSize:'0.85rem',fontFamily:'inherit',margin:0,maxHeight:300,overflowY:'auto'}}>{result}</pre>
+            <button onClick={()=>onInsert(result)} className="et-btn-gold" style={{marginTop:12,width:'100%',justifyContent:'center'}}>
+              ✓ Adicionar como serviço de Voo
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ SERVICE CARD ============
+function SvcCard({svc,idx,currency,aiState,onUp,onDel,onDup,onAI,onBeautify,onAddImg,onRemoveImg,onDragStart,onDragOver,onDrop,isDragging}){
+  const [imgInput,setImgInput]=useState('');
+  const [dragOver,setDragOver]=useState(false);
+  const fileRef=useRef(null);
+  const gold='#d4af37';
+  const imgs = svc.images || [];
+
+  const handleFileDrop = e => {
+    e.preventDefault(); e.stopPropagation();
+    setDragOver(false);
+    const f = e.dataTransfer?.files?.[0];
+    if(f && f.type.startsWith('image/')){
+      const r = new FileReader();
+      r.onload = ev => onAddImg(ev.target.result);
+      r.readAsDataURL(f);
+    }
+  };
+
+  return (
+    <div className={`et-svccard ${isDragging?'dragging':''}`} draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+        <span style={{color:'#4a6580',cursor:'grab',fontSize:14,userSelect:'none'}}>⋮⋮</span>
+        <span style={{background:gold,color:'#00294d',fontSize:'0.65rem',fontWeight:900,padding:'2px 7px',borderRadius:4}}>#{idx+1}</span>
+        <select value={svc.type} onChange={e=>onUp({type:e.target.value})} className="et-select" style={{flex:1,fontSize:'0.8rem',padding:'0.35rem 0.5rem'}}>
+          {SVCTYPE.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+        <button onClick={onDup} title="Duplicar" style={{background:'transparent',border:'none',cursor:'pointer',color:'#94a3b8',padding:4,fontSize:14}}>📋</button>
+        <button onClick={onDel} title="Excluir" style={{background:'transparent',border:'none',cursor:'pointer',color:'#ef4444',padding:4,fontSize:14}}>🗑</button>
+      </div>
+
+      <input type="text" value={svc.title} onChange={e=>onUp({title:e.target.value})} className="et-input" placeholder="Título do serviço" style={{marginBottom:8}}/>
+
+      <div style={{marginBottom:8}}>
+        <label style={{fontSize:'0.65rem',color:'#64748b',display:'block',marginBottom:2}}>📅 Data do serviço</label>
+        <input type="date" value={svc.serviceDate||''} onChange={e=>onUp({serviceDate:e.target.value})} className="et-input" style={{fontSize:'0.75rem'}}/>
+      </div>
+
+      <div style={{position:'relative',marginBottom:4}}>
+        <textarea value={svc.description} onChange={e=>onUp({description:e.target.value})} rows={5} className="et-input" placeholder="Descrição..." style={{paddingBottom:36}}/>
+        <div style={{position:'absolute',bottom:6,right:6,display:'flex',gap:4}}>
+          <button onClick={onBeautify} disabled={!!aiState}
+            style={{padding:'4px 9px',borderRadius:4,border:'none',background:aiState==='beautify'?'#374151':'#0369a1',color:'#fff',fontSize:'0.68rem',fontWeight:700,cursor:aiState?'not-allowed':'pointer',opacity:aiState?0.7:1}}>
+            💄 {aiState==='beautify'?'...':'Embelezar'}
+          </button>
+          <button onClick={onAI} disabled={!!aiState}
+            style={{padding:'4px 9px',borderRadius:4,border:'none',background:aiState==='gen'?'#374151':'#7c3aed',color:'#fff',fontSize:'0.68rem',fontWeight:700,cursor:aiState?'not-allowed':'pointer',opacity:aiState?0.7:1}}>
+            ✨ {aiState==='gen'?'...':'IA'}
+          </button>
+        </div>
+      </div>
+      <div style={{fontSize:'0.65rem',color:'#4a6580',marginBottom:8}}>✨ IA = gera do zero &nbsp;|&nbsp; 💄 Embelezar = só formata (preserva o texto)</div>
+
+      <div style={{marginBottom:8}}>
+        <div style={{fontSize:'0.65rem',color:'#64748b',marginBottom:4}}>📸 Fotos ({imgs.length}/3)</div>
+        {imgs.length > 0 && (
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4,marginBottom:6}}>
+            {imgs.map((img,i)=>(
+              <div key={i} style={{position:'relative'}}>
+                <img src={img} alt="" style={{width:'100%',height:60,objectFit:'cover',objectPosition:'center',borderRadius:4,display:'block'}}/>
+                <button onClick={()=>onRemoveImg(i)} style={{position:'absolute',top:2,right:2,background:'rgba(0,0,0,0.75)',border:'none',borderRadius:3,color:'#fff',cursor:'pointer',padding:'1px 5px',fontSize:'0.65rem'}}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        {imgs.length < 3 && (
+          <div className={`et-dropzone ${dragOver?'drop-active':''}`}
+            onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOver(true);}}
+            onDragLeave={e=>{e.preventDefault();setDragOver(false);}}
+            onDrop={handleFileDrop}>
+            <div style={{display:'flex',gap:4,marginBottom:4}}>
+              <input type="text" value={imgInput} onChange={e=>setImgInput(e.target.value)} className="et-input" placeholder="URL da imagem..." style={{flex:1,fontSize:'0.75rem'}}
+                onKeyDown={e=>{if(e.key==='Enter' && imgInput){onAddImg(imgInput);setImgInput('');}}}/>
+              <button onClick={()=>{if(imgInput){onAddImg(imgInput);setImgInput('');}}} className="et-btn-ghost">⬇</button>
+            </div>
+            <div style={{display:'flex',gap:4}}>
+              <button onClick={()=>window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent((svc.title||svc.type)+' turismo luxo')}`,'_blank')} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>🔍 Google</button>
+              <button onClick={()=>fileRef.current?.click()} className="et-btn-ghost" style={{flex:1,justifyContent:'center'}}>📁 Upload</button>
+              <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+                const f=e.target.files?.[0]; if(!f)return;
+                const r=new FileReader(); r.onload=ev=>onAddImg(ev.target.result); r.readAsDataURL(f);
+                e.target.value='';
+              }}/>
+            </div>
+            <div className="et-dropzone-hint">ou arraste uma imagem aqui</div>
+          </div>
+        )}
+      </div>
+
+      <div style={{display:'flex',alignItems:'center',gap:6}}>
+        <span style={{color:'#64748b',fontSize:'0.8rem'}}>{CURRENCIES[currency]?.symbol}</span>
+        <input type="number" step="0.01" value={svc.price} onChange={e=>onUp({price:e.target.value})} className="et-input" placeholder="0,00"/>
+      </div>
+    </div>
+  );
+}
+
+// ============ PDF PREVIEW ============
+function PDFPreview({quote,total,agency}){
+  agency = agency || loadAgency();
+  const isPrint=quote.template==='print';
+  const isLandscape = quote.orientation==='landscape';
+  const gold='#d4af37';
+  const coverBg=isPrint?'#fff':'#00294d';
+  const coverText=isPrint?'#00294d':'#fff';
+  const coverSub=isPrint?'#64748b':'#94a3b8';
+  const coverImg = quote.trip && quote.trip.coverImageUrl;
+  const pageStyle = {aspectRatio: isLandscape?'297/210':'210/297', borderRadius:12, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.4)'};
+  const renderDesc=t=>{ if(!t) return React.createElement('span',{style:{color:'#94a3b8'}},'Descrição...'); const parts=t.split(/(\*\*[^*]+\*\*)/g); return parts.map((p,i)=>p.startsWith('**')&&p.endsWith('**')?React.createElement('strong',{key:i},p.slice(2,-2)):React.createElement('span',{key:i},p)); };
+
+  // ========= CAPA =========
+  const coverContent = coverImg ? (
+    <div style={{...pageStyle,background:coverBg,position:'relative',display:'flex',flexDirection:'column'}}>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:5,background:gold,zIndex:2}}/>
+      <div style={{position:'relative',width:'100%',height:'50%',overflow:'hidden',flexShrink:0}}>
+        <img src={coverImg} alt="" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',display:'block'}}/>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,rgba(0,41,77,0.45) 0%,rgba(0,41,77,0.92) 100%)'}}/>
+        <div style={{position:'absolute',top:18,left:24,display:'flex',alignItems:'center',gap:8,zIndex:3}}>
+          <LogoBadge size={36} agency={agency}/>
+          <div style={{color:'rgba(255,255,255,0.85)',fontSize:'0.65rem'}}>
+            <div style={{textTransform:'uppercase',letterSpacing:'0.15em'}}>{agency.name||'Expert Turismo'}</div>
+            <div>{agency.tagline||'Viagens sob medida'}</div>
+          </div>
+        </div>
+        <div style={{position:'absolute',bottom:20,left:24,right:24,zIndex:3}}>
+          <div style={{fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.3em',color:gold,marginBottom:6}}>Proposta de Viagem</div>
+          <h1 style={{fontSize:isLandscape?'1.6rem':'2rem',fontWeight:900,fontFamily:'Playfair Display,Georgia,serif',color:'#fff',margin:'0 0 6px',lineHeight:1.1}}>{quote.trip.destination||'Destino dos Sonhos'}</h1>
+          <div style={{width:50,height:2,background:gold}}/>
+        </div>
+      </div>
+      <div style={{flex:1,padding:'1.2rem 1.5rem',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontSize:'1rem',fontWeight:700,color:coverText,fontFamily:'Playfair Display,Georgia,serif',marginBottom:4}}>{quote.client.name||'Cliente'}</div>
+          <div style={{width:30,height:2,background:gold,marginBottom:6}}/>
+          <div style={{fontSize:'0.75rem',color:coverSub}}>{fmtDate(quote.trip.startDate)} — {fmtDate(quote.trip.endDate)}</div>
+          <div style={{fontSize:'0.75rem',color:coverSub}}>{quote.trip.travelers} viajante{quote.trip.travelers!==1?'s':''}</div>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+          <div style={{fontSize:'0.65rem',color:coverSub}}><div>Nº {quote.id.slice(0,8).toUpperCase()}</div></div>
+          <div style={{fontSize:'0.65rem',fontStyle:'italic',color:gold}}>by {agency.name||'Expert Turismo'}</div>
+        </div>
+      </div>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:5,background:gold,zIndex:2}}/>
+    </div>
+  ) : (
+    <div style={{...pageStyle,background:coverBg,padding:'2rem',display:'flex',flexDirection:'column',position:'relative'}}>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:5,background:gold}}/>
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center'}}>
+        <div style={{padding:'1.2rem 1.5rem',background:isPrint?'rgba(212,175,55,0.06)':'rgba(255,255,255,0.04)',border:'1px solid rgba(212,175,55,0.25)',borderRadius:14,marginBottom:18,display:'inline-block'}}>
+          <LogoBadge size={64} agency={agency}/>
+        </div>
+        <div style={{color:coverSub,fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.25em',marginBottom:2}}>{agency.name||'Expert Turismo'}</div>
+        <div style={{color:coverSub,fontSize:'0.6rem',fontStyle:'italic',marginBottom:24}}>{agency.tagline||'Viagens sob medida'}</div>
+        <div style={{fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.3em',color:gold,marginBottom:12}}>Proposta de Viagem</div>
+        <h1 style={{fontSize:isLandscape?'2rem':'2.2rem',fontWeight:900,fontFamily:'Playfair Display,Georgia,serif',color:coverText,margin:'0 0 10px',lineHeight:1.05}}>{quote.trip.destination||'Destino dos Sonhos'}</h1>
+        <div style={{width:60,height:2,background:gold,margin:'8px auto 12px'}}/>
+        <div style={{fontSize:'1rem',color:coverText,fontFamily:'Playfair Display,Georgia,serif',marginBottom:6}}>{quote.client.name||'Cliente'}</div>
+        <div style={{fontSize:'0.75rem',color:coverSub}}>{fmtDate(quote.trip.startDate)} — {fmtDate(quote.trip.endDate)}</div>
+        <div style={{fontSize:'0.75rem',color:coverSub,marginTop:2}}>{quote.trip.travelers} viajante{quote.trip.travelers!==1?'s':''}</div>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',fontSize:'0.65rem'}}>
+        <div style={{color:coverSub}}>Nº {quote.id.slice(0,8).toUpperCase()}</div>
+        <div style={{color:gold,fontStyle:'italic'}}>by {agency.name||'Expert Turismo'}</div>
+      </div>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:5,background:gold}}/>
+    </div>
+  );
+
+  // ========= PÁGINA UNIFICADA Resumo + Investimento =========
+  const sortedSvcs = [...quote.services].sort((a,b)=>{
+    const da=a.serviceDate||quote.trip.startDate, db=b.serviceDate||quote.trip.startDate;
+    return new Date(da)-new Date(db);
+  });
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:14,fontFamily:'Playfair Display,Georgia,serif'}}>
+      {coverContent}
+
+      {quote.services.map((s,i)=>{
+        const imgs = s.images || [];
+        const imgH = isLandscape ? 110 : 160;
+        const imgH3 = isLandscape ? 80 : 120;
+        const imgH3sm = isLandscape ? 55 : 75;
+        return (
+          <div key={s.id} style={{...pageStyle,background:'#fff',display:'flex',flexDirection:'column'}}>
+            {/* Letterhead */}
+            <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',borderBottom:`2px solid ${gold}`,background:'#fff'}}>
+              <LogoBadge size={18} agency={agency}/>
+              <div style={{fontSize:'0.55rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em'}}>{agency.name||'Expert Turismo'} · {agency.tagline||''}</div>
+              <div style={{marginLeft:'auto',fontSize:'0.55rem',color:'#cbd5e1'}}>{i+1} / {quote.services.length}</div>
+            </div>
+            {imgs.length === 1 && <img src={imgs[0]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>}
+            {imgs.length === 2 && (
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:3}}>
+                <img src={imgs[0]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+                <img src={imgs[1]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+              </div>
+            )}
+            {imgs.length >= 3 && (
+              <div>
+                <img src={imgs[0]} alt="" style={{width:'100%',height:imgH3,objectFit:'cover',objectPosition:'center',display:'block',marginBottom:3}}/>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:3}}>
+                  <img src={imgs[1]} alt="" style={{width:'100%',height:imgH3sm,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+                  <img src={imgs[2]} alt="" style={{width:'100%',height:imgH3sm,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+                </div>
+              </div>
+            )}
+            {imgs.length>0 && <div style={{width:'100%',height:2,background:`linear-gradient(90deg,${gold},rgba(212,175,55,0.15) 70%,transparent)`}}/>}
+            <div style={{padding:'0.9rem 1.4rem',flex:1,display:'flex',flexDirection:'column'}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}>
+                <span style={{background:gold,color:'#00294d',fontSize:'0.65rem',fontWeight:900,padding:'2px 8px',borderRadius:4}}>{String(i+1).padStart(2,'0')}</span>
+                <span style={{fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em',color:'#94a3b8'}}>{SVCTYPE.find(t=>t.value===s.type)?.label}</span>
+                {s.serviceDate && <span style={{fontSize:'0.65rem',color:'#64748b',marginLeft:'auto'}}>📅 {fmtDate(s.serviceDate)}</span>}
+              </div>
+              <h3 style={{fontSize:'1.2rem',fontWeight:900,color:'#00294d',margin:'0 0 6px'}}>{s.title||'Serviço'}</h3>
+              <div style={{width:42,height:2,background:gold,marginBottom:8}}/>
+              <p style={{color:'#475569',lineHeight:1.65,marginBottom:10,whiteSpace:'pre-wrap',fontFamily:'DM Sans,sans-serif',fontSize:'0.78rem',flex:1}}>{renderDesc(s.description)}</p>
+              {(s.price&&Number(s.price)>0)&&(
+              <div style={{display:'flex',justifyContent:'flex-end',borderTop:'1px solid #f1f5f9',paddingTop:8}}>
+                <div style={{textAlign:'right'}}><div style={{fontSize:'0.6rem',color:'#94a3b8',textTransform:'uppercase'}}>Valor</div><div style={{fontSize:'1.15rem',fontWeight:900,color:'#00294d'}}>{fmt(s.price,quote.currency)}</div></div>
+              </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* PÁGINA UNIFICADA Resumo + Investimento */}
+      <div style={{...pageStyle,background:'#fff',display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',borderBottom:`2px solid ${gold}`}}>
+          <LogoBadge size={18} agency={agency}/>
+          <div style={{fontSize:'0.55rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em'}}>{agency.name||'Expert Turismo'} · {agency.tagline||''}</div>
+        </div>
+        <div style={{padding:'0.95rem 1.4rem',flex:1,display:'flex',flexDirection:'column',fontFamily:'DM Sans,sans-serif'}}>
+          <div style={{borderBottom:`2px solid ${gold}`,paddingBottom:6,marginBottom:10}}>
+            <div style={{fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8'}}>Visão geral</div>
+            <h2 style={{fontSize:'1.3rem',fontWeight:900,color:'#00294d',margin:0,fontFamily:'Playfair Display,Georgia,serif'}}>Resumo da Jornada</h2>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1.25fr',gap:14,marginBottom:10}}>
+            <div>
+              <div style={{fontSize:'0.62rem',fontWeight:700,color:'#00294d',textTransform:'uppercase',marginBottom:6}}>🗓️ Linha do tempo</div>
+              {sortedSvcs.map((s,i)=>(
+                <div key={s.id} style={{display:'flex',gap:7,marginBottom:7}}>
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
+                    <div style={{width:22,height:22,borderRadius:'50%',background:gold,color:'#00294d',fontWeight:900,fontSize:'0.6rem',display:'flex',alignItems:'center',justifyContent:'center'}}>{String(i+1).padStart(2,'0')}</div>
+                    {i<sortedSvcs.length-1 && <div style={{width:2,flex:1,background:gold,opacity:0.4,marginTop:2,minHeight:10}}/>}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'0.6rem',color:'#64748b',textTransform:'uppercase'}}>{s.serviceDate?fmtDate(s.serviceDate):'A definir'}</div>
+                    <div style={{fontWeight:700,color:'#00294d',fontSize:'0.72rem'}}>{s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{fontSize:'0.62rem',fontWeight:700,color:'#00294d',textTransform:'uppercase',marginBottom:6}}>📋 Tabela</div>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'0.62rem'}}>
+                <thead>
+                  <tr style={{background:'#00294d',color:'#fff'}}>
+                    <th style={{padding:'4px 5px',textAlign:'left'}}>#</th>
+                    <th style={{padding:'4px 5px',textAlign:'left'}}>Data</th>
+                    <th style={{padding:'4px 5px',textAlign:'left'}}>Serviço</th>
+                    <th style={{padding:'4px 5px',textAlign:'right'}}>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedSvcs.map((s,i)=>(
+                    <tr key={s.id}>
+                      <td style={{padding:'4px 5px',borderBottom:'1px solid #f1f5f9',color:'#64748b'}}>{String(i+1).padStart(2,'0')}</td>
+                      <td style={{padding:'4px 5px',borderBottom:'1px solid #f1f5f9',color:'#475569'}}>{s.serviceDate?fmtDateShort(s.serviceDate):'-'}</td>
+                      <td style={{padding:'4px 5px',borderBottom:'1px solid #f1f5f9',color:'#1e293b',fontWeight:600}}>{((s.title||SVCTYPE.find(t=>t.value===s.type)?.label)||'').slice(0,22)}</td>
+                      <td style={{padding:'4px 5px',borderBottom:'1px solid #f1f5f9',color:'#00294d',fontWeight:700,textAlign:'right'}}>{fmt(s.price,quote.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{marginTop:8,background:'#fef9e7',borderLeft:`3px solid ${gold}`,padding:'6px 8px',borderRadius:5}}>
+                <div style={{fontSize:'0.58rem',color:'#7c5e00',textTransform:'uppercase',fontWeight:700,marginBottom:1}}>📍 {quote.trip.destination||'Destino'}</div>
+                <div style={{fontSize:'0.6rem',color:'#64748b'}}>{fmtDate(quote.trip.startDate)} — {fmtDate(quote.trip.endDate)} • {quote.trip.travelers} pax</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{borderTop:`2px solid ${gold}`,paddingTop:8,marginTop:6}}>
+            <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:6}}>
+              <div style={{fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.1em',color:'#94a3b8'}}>Investimento</div>
+              <h2 style={{fontSize:'1.15rem',fontWeight:900,color:'#00294d',margin:0,fontFamily:'Playfair Display,Georgia,serif'}}>Valores</h2>
+            </div>
+            {quote.services.map((s,i)=>(
+              <div key={s.id} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid #f1f5f9',fontSize:'0.72rem',color:'#475569'}}>
+                <span><b style={{color:'#94a3b8',marginRight:6}}>{String(i+1).padStart(2,'0')}</b>{s.title||SVCTYPE.find(t=>t.value===s.type)?.label}</span>
+                <span style={{fontWeight:700,color:'#1e293b'}}>{fmt(s.price,quote.currency)}</span>
+              </div>
+            ))}
+            <div style={{marginTop:8,background:'#00294d',borderRadius:8,padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><div style={{fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.1em',color:gold}}>Total</div><div style={{fontSize:'1.4rem',fontWeight:900,color:'#fff'}}>{fmt(total,quote.currency)}</div></div>
+              {quote.trip.travelers>0&&total>0&&<div style={{textAlign:'right'}}><div style={{fontSize:'0.6rem',color:'#94a3b8',textTransform:'uppercase'}}>Por pessoa</div><div style={{fontSize:'1rem',fontWeight:700,color:'#fff'}}>{fmt(total/quote.trip.travelers,quote.currency)}</div></div>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ HISTORY VIEW ============
+function HistoryView({quotes,search,setSearch,filterStatus,setFilterStatus,loadQ,dupQ,delQ,openShare}){
+  return (
+    <div className="fade-in">
+      <div className="et-card" style={{marginBottom:16}}>
+        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+          <input type="text" value={search} onChange={e=>setSearch(e.target.value)} className="et-input" style={{flex:1,minWidth:240}} placeholder="🔍 Buscar por cliente, destino ou título..."/>
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="et-select" style={{minWidth:160}}>
+            <option value="all">Todos os status</option>
+            {Object.entries(STATUS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </div>
+      </div>
+      {quotes.length===0?(
+        <div className="et-card" style={{textAlign:'center',padding:'4rem'}}>
+          <div style={{fontSize:48,marginBottom:12,opacity:0.5}}>📋</div>
+          <div style={{color:'#64748b',fontWeight:600}}>Nenhuma proposta encontrada</div>
+        </div>
+      ):(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}}>
+          {quotes.map(q=>{
+            const tot=q.services.reduce((s,x)=>s+Number(x.price||0),0);
+            const st=STATUS[q.status]||STATUS.draft;
+            return (
+              <div key={q.id} style={{background:'#0d2240',border:'1px solid #1e3a5f',borderRadius:12,overflow:'hidden',transition:'all 0.2s'}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='#d4af37';e.currentTarget.style.transform='translateY(-2px)';}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='#1e3a5f';e.currentTarget.style.transform='translateY(0)';}}>
+                <div style={{height:4,background:st.color}}/>
+                <div style={{padding:16}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                    <span style={{background:st.color,color:'#fff',fontSize:'0.65rem',fontWeight:700,padding:'2px 8px',borderRadius:4,boxShadow:`0 0 8px ${st.color}88`,letterSpacing:'0.04em'}}>{st.label}</span>
+                    <span style={{fontSize:'0.7rem',color:'#4a6580'}}>{new Date(q.updatedAt).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <div style={{fontWeight:700,color:'#e2e8f0',marginBottom:4,fontSize:'0.95rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{q.title}</div>
+                  <div style={{fontSize:'0.8rem',color:'#94a3b8',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.client.name||'Sem cliente'}</div>
+                  <div style={{fontSize:'0.75rem',color:'#4a6580',marginBottom:10,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📍 {q.trip.destination||'Sem destino'}</div>
+                  <div style={{fontSize:'1.2rem',fontWeight:900,color:'#d4af37',marginBottom:12,fontFamily:'Playfair Display,Georgia,serif'}}>{fmt(tot,q.currency)}</div>
+                  <div style={{display:'flex',gap:6,borderTop:'1px solid #1e3a5f',paddingTop:12}}>
+                    <button onClick={()=>loadQ(q)} className="et-btn-gold" style={{flex:1,justifyContent:'center',fontSize:'0.8rem',padding:'0.45rem'}}>✏️ Abrir</button>
+                    <button onClick={()=>dupQ(q)} className="et-btn-ghost" title="Duplicar">📋</button>
+                    <button onClick={()=>openShare(q)} className="et-btn-ghost" title="Compartilhar">🔗</button>
+                    <button onClick={()=>delQ(q.id,q.shareId)} className="et-btn-danger" title="Excluir">🗑</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ SHARE VIEW ============
+function ShareView({quote,total,onBack,showToast}){
+  const link=`${window.location.origin}${window.location.pathname}#/p/${quote.shareId}`;
+  const [copied,setCopied]=useState(false);
+  const copy=()=>{navigator.clipboard.writeText(link);setCopied(true);setTimeout(()=>setCopied(false),2000);showToast&&showToast('Link copiado!');};
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`Olá ${quote.client.name||''}, segue sua proposta de viagem para ${quote.trip.destination||''}: ${link}`)}`;
+  const email = `mailto:${quote.client.email||''}?subject=${encodeURIComponent('Sua proposta de viagem - '+(quote.trip.destination||''))}&body=${encodeURIComponent(`Olá ${quote.client.name||''},\n\nSegue sua proposta de viagem:\n${link}\n\nAtenciosamente,\nExpert Turismo`)}`;
+  return (
+    <div style={{minHeight:'100vh',background:'#07172a',padding:'1.5rem'}} className="fade-in">
+      <div style={{maxWidth:760,margin:'0 auto'}}>
+        <button onClick={onBack} style={{background:'transparent',border:'none',color:'#d4af37',cursor:'pointer',fontWeight:600,marginBottom:16,fontFamily:'inherit'}}>← Voltar ao editor</button>
+        <div className="et-card" style={{marginBottom:16}}>
+          <div style={{color:'#d4af37',fontWeight:700,fontSize:'1rem',marginBottom:8}}>🔗 Compartilhar proposta</div>
+          <div style={{fontSize:'0.85rem',color:'#64748b',marginBottom:12}}>O link abre uma versão somente-leitura da proposta. Funciona em qualquer dispositivo.</div>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <input type="text" value={link} readOnly className="et-input" style={{flex:1,fontFamily:'monospace',fontSize:'0.78rem',minWidth:240}}/>
+            <button onClick={copy} className="et-btn-gold">{copied?'✓ Copiado!':'📋 Copiar'}</button>
+          </div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <a href={whatsapp} target="_blank" rel="noopener" style={{textDecoration:'none'}}><button className="et-btn-ghost" style={{borderColor:'#16a34a',color:'#4ade80'}}>💬 WhatsApp</button></a>
+            <a href={email} style={{textDecoration:'none'}}><button className="et-btn-ghost" style={{borderColor:'#2563eb',color:'#60a5fa'}}>📧 Email</button></a>
+          </div>
+        </div>
+        <div className="et-card">
+          <div style={{fontSize:'0.7rem',color:'#4a6580',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:12}}>Prévia</div>
+          <PDFPreview quote={quote} total={total}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
