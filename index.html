@@ -1209,7 +1209,7 @@ function App(){
   };
 
   const autoTotal=quote.services.reduce((s,x)=>s+(Number(x.price)||0),0);
-  const total=(quote.manualTotal!==undefined&&quote.manualTotal!==''&&quote.manualTotal!==null)?Number(quote.manualTotal)||0:autoTotal;
+  const total=(quote.manualTotal!==undefined&&quote.manualTotal!==null&&String(quote.manualTotal).length>0)?Number(quote.manualTotal)||0:autoTotal;
   const filtered=allQuotes.filter(q=>{ const t=search.toLowerCase(); const ok=!t||q.title.toLowerCase().includes(t)||q.client.name.toLowerCase().includes(t)||q.trip.destination.toLowerCase().includes(t); return ok&&(filterStatus==='all'||q.status===filterStatus); });
 
   // ============ PUBLIC SHARE VIEW (read-only) ============
@@ -1455,16 +1455,18 @@ function App(){
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontSize:'0.7rem',color:'#64748b',textTransform:'uppercase',letterSpacing:'0.05em'}}>Total da proposta</div>
                     <div style={{display:'flex',gap:4}}>
-                      <button onClick={()=>upQ({manualTotal:''})} style={{fontSize:'0.62rem',padding:'2px 8px',borderRadius:4,border:'1px solid',borderColor:(!quote.manualTotal?gold:'#1e3a5f'),color:(!quote.manualTotal?gold:'#4a6580'),background:'transparent',cursor:'pointer',fontWeight:600}}>Auto</button>
-                      <button onClick={()=>upQ({manualTotal:quote.manualTotal||String(autoTotal||'')})} style={{fontSize:'0.62rem',padding:'2px 8px',borderRadius:4,border:'1px solid',borderColor:(quote.manualTotal?gold:'#1e3a5f'),color:(quote.manualTotal?gold:'#4a6580'),background:'transparent',cursor:'pointer',fontWeight:600}}>Manual</button>
+                      {(()=>{const isM=quote.manualTotal!==undefined&&quote.manualTotal!==null&&String(quote.manualTotal).length>0;return(<>
+                      <button onClick={()=>upQ({manualTotal:null})} style={{fontSize:'0.62rem',padding:'2px 8px',borderRadius:4,border:'1px solid',borderColor:(!isM?gold:'#1e3a5f'),color:(!isM?gold:'#4a6580'),background:'transparent',cursor:'pointer',fontWeight:600}}>Auto</button>
+                      <button onClick={()=>{if(!isM)upQ({manualTotal:autoTotal>0?String(autoTotal):'0'});}} style={{fontSize:'0.62rem',padding:'2px 8px',borderRadius:4,border:'1px solid',borderColor:(isM?gold:'#1e3a5f'),color:(isM?gold:'#4a6580'),background:'transparent',cursor:'pointer',fontWeight:600}}>Manual</button>
+                      </>);})()}
                     </div>
                   </div>
-                  {quote.manualTotal!==undefined&&quote.manualTotal!==''
+                  {quote.manualTotal!==undefined&&quote.manualTotal!==null&&String(quote.manualTotal).length>0
                     ?<input type="number" value={quote.manualTotal} onChange={e=>upQ({manualTotal:e.target.value})} placeholder="Digite o valor total" style={{width:'100%',fontSize:'1.6rem',fontWeight:900,color:gold,background:'transparent',border:'none',borderBottom:'2px solid '+gold,padding:'2px 0',outline:'none',fontFamily:'Playfair Display,Georgia,serif',marginBottom:4}}/>
                     :<div style={{fontSize:'1.9rem',fontWeight:900,color:gold,fontFamily:'Playfair Display,Georgia,serif'}}>{fmt(total,quote.currency)}</div>
                   }
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div style={{fontSize:'0.65rem',color:'#4a6580'}}>{quote.manualTotal?`Auto: ${fmt(autoTotal,quote.currency)}`:''}</div>
+                    <div style={{fontSize:'0.65rem',color:'#4a6580'}}>{(quote.manualTotal!==undefined&&quote.manualTotal!==null&&String(quote.manualTotal).length>0)?`Auto: ${fmt(autoTotal,quote.currency)}`:''}</div>
                     <div style={{textAlign:'right',color:'#64748b',fontSize:'0.75rem'}}>
                       <div>{quote.services.length} serviço{quote.services.length!==1?'s':''}</div>
                       {quote.trip.travelers>0&&total>0&&<div>{fmt(total/quote.trip.travelers,quote.currency)} / pax</div>}
