@@ -1,2 +1,5 @@
 server.ps1
 CONTEXT.md
+.env
+.env.local
+.env*.local
