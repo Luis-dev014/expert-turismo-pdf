@@ -224,7 +224,49 @@ const SVCTYPE = [
   {value:'experiencia',label:'✨ Experiência'},
   {value:'outro',label:'📌 Outro'}
 ];
-const newQuoteObj = () => ({id:uid(),title:'Nova Proposta',status:'draft',template:'digital',currency:'BRL',orientation:'portrait',client:{name:'',email:'',phone:''},trip:{destination:'',startDate:todayISO(),endDate:todayISO(),travelers:2,coverImageUrl:''},services:[],notes:'',shareId:uid(),galleryConfig:{columns:3,fixedHeight:true},financeiro:{modoFinanceiro:false,moedaOriginal:'USD',custoLiquido:'',cambioTurismo:'',markup:'',exibirDisclaimer:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+// Bloco 3 (rev.2): Smart Gallery - 1 slider de tamanho + 1 toggle
+// Substitui o modelo complexo (layout/spotlightSize/masonry) por
+// "Tamanho das fotos" com sistema decidindo colunas/alturas automaticamente.
+const DEFAULT_GALLERY_CONFIG = {
+  size: 'M',                   // 'XS' | 'S' | 'M' | 'L' | 'XL'
+  featureFirst: false,         // destaca primeira foto (cinematográfico)
+  autoPageBreak: true,         // sempre ON (escondido em avançado)
+  showTitles: true             // sempre ON (escondido)
+};
+
+/**
+ * Presets de tamanho - sistema decide colunas e altura automaticamente.
+ * Filosofia: mais fotos = colunas mais densas. Menos fotos = fotos majestosas.
+ */
+const GALLERY_SIZE_PRESETS = {
+  // imgH    → altura na PÁGINA dedicada de galeria (final do PDF)
+  // imgHSvc → altura DENTRO de um serviço (compartilha espaço com texto)
+  // featureH → altura da imagem destacada (featureFirst=true)
+  XS: { label: 'Mini', desc: '4 col', cols: 4,
+        imgH:    { portrait: 80,  landscape: 65 },
+        imgHSvc: { portrait: 55,  landscape: 45 },
+        featureH:{ portrait: 110, landscape: 90 } },
+  S:  { label: 'Pequeno', desc: '3 col', cols: 3,
+        imgH:    { portrait: 115, landscape: 95 },
+        imgHSvc: { portrait: 80,  landscape: 65 },
+        featureH:{ portrait: 140, landscape: 115 } },
+  M:  { label: 'Médio', desc: '2 col', cols: 2,
+        imgH:    { portrait: 165, landscape: 140 },
+        imgHSvc: { portrait: 115, landscape: 95 },
+        featureH:{ portrait: 175, landscape: 145 } },
+  L:  { label: 'Grande', desc: '1-2 col', cols: 1,
+        imgH:    { portrait: 230, landscape: 200 },
+        imgHSvc: { portrait: 160, landscape: 135 },
+        featureH:{ portrait: 210, landscape: 170 } },
+  XL: { label: 'Hero', desc: '1 por pág', cols: 1, onePerPage: true,
+        imgH:    { portrait: 380, landscape: 290 },
+        imgHSvc: { portrait: 200, landscape: 165 },
+        featureH:{ portrait: 240, landscape: 195 } }
+};
+
+const GALLERY_SIZE_ORDER = ['XS','S','M','L','XL'];
+
+const newQuoteObj = () => ({id:uid(),title:'Nova Proposta',status:'draft',template:'digital',currency:'BRL',orientation:'portrait',client:{name:'',email:'',phone:''},trip:{destination:'',startDate:todayISO(),endDate:todayISO(),travelers:2,coverImageUrl:''},services:[],notes:'',shareId:uid(),galleryConfig:{...DEFAULT_GALLERY_CONFIG},financeiro:{modoFinanceiro:false,moedaOriginal:'USD',custoLiquido:'',cambioTurismo:'',markup:'',exibirDisclaimer:false},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
 const newSvc = () => ({id:uid(),type:'hospedagem',title:'',description:'',images:[],orientation:'portrait',serviceDate:'',price:0,amenities:{seloLuxo:false,earlyCheckin:false,upgrade:false,cafeManha:false,creditoUSD:false}});
 
 function normalizeQuote(q){
@@ -233,7 +275,10 @@ function normalizeQuote(q){
     if(s.imageUrl && !s.images){ return {...s,images:[s.imageUrl],imageUrl:undefined,orientation:s.orientation||'portrait',serviceDate:s.serviceDate||''}; }
     return {...s,images:s.images||[],orientation:s.orientation||'portrait',serviceDate:s.serviceDate||'',amenities:s.amenities||{seloLuxo:false,earlyCheckin:false,upgrade:false,cafeManha:false,creditoUSD:false}};
   });
-  return {...q,orientation:q.orientation||'portrait',services,galleryConfig:q.galleryConfig||{columns:3,fixedHeight:true},financeiro:q.financeiro||{modoFinanceiro:false,moedaOriginal:'USD',custoLiquido:'',cambioTurismo:'',markup:'',exibirDisclaimer:false}};
+  // Bloco 3: merge com DEFAULT_GALLERY_CONFIG garante backward compatibility
+  // (quotes antigos só tinham columns/fixedHeight, agora ganham layout/spotlightSize/etc)
+  const galleryConfig = {...DEFAULT_GALLERY_CONFIG, ...(q.galleryConfig || {})};
+  return {...q,orientation:q.orientation||'portrait',services,galleryConfig,financeiro:q.financeiro||{modoFinanceiro:false,moedaOriginal:'USD',custoLiquido:'',cambioTurismo:'',markup:'',exibirDisclaimer:false}};
 }
 
 const debounce = (fn,wait)=>{ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),wait); }; };
@@ -424,50 +469,90 @@ REGRAS:
 const PLACEHOLDER_IMG = 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#e2e8f0"/></linearGradient></defs><rect width="400" height="300" fill="url(#bg)"/><g transform="translate(200,130)" fill="#94a3b8"><circle cx="0" cy="-15" r="22" fill="none" stroke="#94a3b8" stroke-width="3"/><path d="M-12,-15 L-4,-7 L4,-15 L12,-7" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-6" cy="-20" r="2" fill="#94a3b8"/></g><text x="200" y="195" font-family="DM Sans, sans-serif" font-size="14" fill="#64748b" text-anchor="middle" font-weight="600">Imagem indisponivel</text><text x="200" y="215" font-family="DM Sans, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">URL nao acessivel</text></svg>`);
 
 /**
- * Pré-carrega todas as imagens do container e substitui as quebradas
- * pelo PLACEHOLDER_IMG. Garante que html2canvas não capture espaços em branco.
+ * Pré-carrega imagens, converte URLs externas em base64 (evita tainted canvas),
+ * e substitui imagens quebradas pelo PLACEHOLDER_IMG.
+ *
+ * Estratégia em 2 etapas:
+ *   1. Converter URLs http/https em data URI base64 (resolve CORS no html2canvas)
+ *   2. Aguardar carregamento e fallback pra quebradas
+ *
+ * Por que? Mesmo com useCORS:true, html2canvas falha em capturar imagens
+ * cujos servidores não enviam Access-Control-Allow-Origin (maioria dos hosts).
+ * Browser carrega no <img> mas o canvas fica "tainted" e a render quebra.
+ * Solução: substituir src pelo base64 ANTES de chamar html2canvas.
  */
 async function preloadAndFixImages(container, showToast) {
-  const imgs = container.querySelectorAll('img');
+  const imgs = Array.from(container.querySelectorAll('img'));
   let brokenCount = 0;
+  let convertedCount = 0;
+  let alreadyDataCount = 0;
 
-  const promises = Array.from(imgs).map(img => {
-    return new Promise((resolve) => {
-      // Já carregada com sucesso
-      if (img.complete && img.naturalWidth > 0) return resolve();
+  // ETAPA 1: Converter URLs externas em base64 (paralelo, com cap de concorrência)
+  // CRÍTICO: Se conversão falhar, força placeholder AGORA (não esperar etapa 2)
+  // pq o browser pode ter carregado a URL e img.complete=true ficaria, mascarando o problema.
+  const externalImgs = imgs.filter(img => img.src && img.src.startsWith('http'));
+  if (externalImgs.length > 0) {
+    if (showToast) showToast(`Convertendo ${externalImgs.length} imagem(ns)...`, 'info');
 
-      // Timeout de segurança (10s por imagem)
-      const timeoutId = setTimeout(() => {
-        if (img.naturalWidth === 0) {
+    const BATCH_SIZE = 6;
+    for (let i = 0; i < externalImgs.length; i += BATCH_SIZE) {
+      const batch = externalImgs.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(async (img) => {
+        try {
+          const result = await loadImageAsBase64(img.src);
+          if (result && typeof result === 'string' && result.startsWith('data:image/')) {
+            img.src = result;
+            convertedCount++;
+          } else {
+            // Conversão falhou (todos proxies sem CORS válido)
+            // → força placeholder pra evitar tainted canvas
+            img.src = PLACEHOLDER_IMG;
+            brokenCount++;
+          }
+        } catch (e) {
           img.src = PLACEHOLDER_IMG;
           brokenCount++;
         }
-        resolve();
-      }, 10000);
+      }));
+    }
+  }
 
-      img.onload = () => {
-        clearTimeout(timeoutId);
-        if (img.naturalWidth === 0) {
-          img.src = PLACEHOLDER_IMG;
-          brokenCount++;
-        }
-        resolve();
-      };
+  // Contar quantas já são data URI (uploads locais)
+  alreadyDataCount = imgs.filter(img => img.src && img.src.startsWith('data:image/')).length - convertedCount;
 
-      img.onerror = () => {
-        clearTimeout(timeoutId);
+  // ETAPA 2: Aguardar carregamento e fallback pra quebradas
+  await Promise.all(imgs.map(img => new Promise((resolve) => {
+    // Já carregada com sucesso
+    if (img.complete && img.naturalWidth > 0) return resolve();
+
+    const timeoutId = setTimeout(() => {
+      if (img.naturalWidth === 0) {
         img.src = PLACEHOLDER_IMG;
-        img.onerror = null; // evita loop se o placeholder também falhar
         brokenCount++;
-        resolve();
-      };
+      }
+      resolve();
+    }, 8000);
 
-      // Se não está completa e nem deu erro ainda, força reload (já tem src)
-      // O onload/onerror acima vai disparar naturalmente
-    });
-  });
+    img.onload = () => {
+      clearTimeout(timeoutId);
+      if (img.naturalWidth === 0) {
+        img.src = PLACEHOLDER_IMG;
+        brokenCount++;
+      }
+      resolve();
+    };
 
-  await Promise.all(promises);
+    img.onerror = () => {
+      clearTimeout(timeoutId);
+      img.src = PLACEHOLDER_IMG;
+      img.onerror = null;
+      brokenCount++;
+      resolve();
+    };
+  })));
+
+  // Log diagnóstico (útil pra debug)
+  console.log(`[preloadAndFixImages] ${imgs.length} total | ${convertedCount} convertidas | ${alreadyDataCount} já base64 | ${brokenCount} placeholders`);
 
   if (brokenCount > 0 && showToast) {
     showToast(`${brokenCount} imagem(ns) substituida(s) por placeholder`, 'warn');
@@ -900,11 +985,14 @@ async function downloadPPTX(quote,total,showToast,agency){
 function buildPDFPages(quote,total,isPrint,agency,consultorName){
   agency = agency || loadAgency();
   const orient = quote.orientation||'portrait';
+  const galleryCfg = {...DEFAULT_GALLERY_CONFIG, ...(quote.galleryConfig||{})};
   const pages = [];
   pages.push({orientation:orient,html:renderCoverHTML(quote,isPrint,agency)});
   quote.services.forEach((s,i)=>{
     // Bloco 2: quebra automática de página para descrições longas
-    const servicePages = renderServicePages(s,i,quote.currency,quote.services.length,agency,orient,consultorName);
+    // Bloco 3 rev.2: propaga galleryConfig para o serviço (imagens herdam config)
+    const sWithCfg = {...s, _galleryCfg: galleryCfg};
+    const servicePages = renderServicePages(sWithCfg,i,quote.currency,quote.services.length,agency,orient,consultorName);
     servicePages.forEach(html => {
       pages.push({orientation:orient, html});
     });
@@ -914,63 +1002,176 @@ function buildPDFPages(quote,total,isPrint,agency,consultorName){
   return pages;
 }
 
-function renderPhotosPageHTML(quote,agency){
-  agency = agency || loadAgency();
-  const gold='#d4af37';
-  const isLandscape = quote.orientation==='landscape';
-  const W = isLandscape?'297mm':'210mm';
-  const H = isLandscape?'210mm':'297mm';
-  const cols = 3;
-  const rows = isLandscape ? 2 : 3;
-  const perPg = cols * rows;
-  const imgH = isLandscape ? '110px' : '135px';
+// ============ GALERIA DE FOTOS - SMART GALLERY (Bloco 3 rev.2) ============
+// Filosofia (UX-research aplicada):
+// - 1 controle de tamanho (slider) decide TODO o layout
+// - Sistema escolhe colunas, alturas e gaps automaticamente
+// - Toggle "featureFirst" para destaque cinematográfico opcional
+// - Inspirado em Lightroom (slider único) + Squarespace (presets nomeados)
 
-  const imgs = [];
-  (quote.services||[]).forEach(s=>(s.images||[]).forEach(u=>{if(u) imgs.push({url:u,title:s.title||''});}));
-  if(imgs.length===0) return [];
+/**
+ * Wrapper de página (letterhead + watermark + footer dourado).
+ */
+function buildGalleryPageWrapper(innerHTML, quote, agency, gold, pgNum, totalPgs) {
+  const isLandscape = quote.orientation === 'landscape';
+  const W = isLandscape ? '297mm' : '210mm';
+  const H = isLandscape ? '210mm' : '297mm';
+  const layoutLabel = 'Galeria do Destino';
 
   const letterhead = `<div style="display:flex;align-items:center;gap:8px;padding:7px 30px;border-bottom:2px solid ${gold};background:#fff;">
     ${agency.logoUrl?`<img src="${agency.logoUrl}" style="height:36px;object-fit:contain;" crossorigin="anonymous"/>`:`<div style="width:36px;height:36px;border-radius:3px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:10px;font-family:Georgia,serif;">ET</div>`}
-    <div style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">${agency.name||'Expert Turismo'} · Álbum de Fotos</div>
+    <div style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">${agency.name||'Expert Turismo'} · ${layoutLabel}</div>
   </div>`;
 
   const watermark = agency.logoUrl
     ? `<img src="${agency.logoUrl}" crossorigin="anonymous" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;opacity:0.04;pointer-events:none;z-index:0;object-fit:contain;"/>`
     : '';
 
-  const totalPgs = Math.ceil(imgs.length/perPg);
-  const pages = [];
+  const pgLabel = totalPgs > 1
+    ? `<span style="font-size:9px;color:#94a3b8;">${pgNum} / ${totalPgs}</span>`
+    : '';
 
-  for(let pi=0;pi<imgs.length;pi+=perPg){
-    const block = imgs.slice(pi,pi+perPg);
-    const pgNum = Math.floor(pi/perPg)+1;
-    const pgLabel = totalPgs>1 ? `<span style="font-size:9px;color:#94a3b8;">${pgNum} / ${totalPgs}</span>` : '';
-    const html = `
-    <div style="font-family:'DM Sans',sans-serif;background:#fff;width:${W};height:${H};overflow:hidden;position:relative;">
-      ${watermark}
-      ${letterhead}
-      <div style="padding:16px 30px 14px;position:relative;z-index:1;">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid rgba(212,175,55,0.3);">
-          <div>
-            <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:0.12em;color:#94a3b8;margin-bottom:2px;">Álbum de Fotos</div>
-            <h2 style="font-size:17px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0;">${quote.trip.destination||'Destino'}</h2>
-          </div>
-          ${pgLabel}
+  return `
+  <div style="font-family:'DM Sans',sans-serif;background:#fff;width:${W};height:${H};overflow:hidden;position:relative;">
+    ${watermark}
+    ${letterhead}
+    <div style="padding:16px 30px 14px;position:relative;z-index:1;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid rgba(212,175,55,0.3);">
+        <div>
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:0.12em;color:#94a3b8;margin-bottom:2px;">${layoutLabel}</div>
+          <h2 style="font-size:17px;font-weight:900;font-family:'Playfair Display',Georgia,serif;color:#00294d;margin:0;">${quote.trip.destination||'Destino'}</h2>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;">
-          ${block.map(({url,title})=>`
-            <div style="overflow:hidden;border-radius:5px;background:#f1f5f9;position:relative;">
-              <img src="${url}" crossorigin="anonymous"
-                   style="width:100%;height:${imgH};object-fit:cover;object-position:center;display:block;"/>
-              ${title?`<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,41,77,0.75));padding:4px 6px;font-size:7.5px;color:#fff;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>`:''}
-            </div>
-          `).join('')}
-        </div>
+        ${pgLabel}
       </div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:${gold};"></div>
-    </div>`;
-    pages.push({orientation:quote.orientation||'portrait',html});
+      ${innerHTML}
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:${gold};"></div>
+  </div>`;
+}
+
+/**
+ * Helper: renderiza uma imagem com título opcional.
+ */
+function renderGalleryImage(url, title, heightPx, showTitle, borderRadius = 5) {
+  const titleOverlay = (showTitle && title)
+    ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,41,77,0.78));padding:5px 7px;font-size:7.5px;color:#fff;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;letter-spacing:0.02em;">${title}</div>`
+    : '';
+  return `<div style="overflow:hidden;border-radius:${borderRadius}px;background:#f1f5f9;position:relative;box-shadow:0 1px 3px rgba(0,41,77,0.08);">
+    <img src="${url}" crossorigin="anonymous"
+         style="width:100%;height:${heightPx}px;object-fit:cover;object-position:center;display:block;"/>
+    ${titleOverlay}
+  </div>`;
+}
+
+/**
+ * Renderiza imagem de destaque (featureFirst=true) - maior, com título Playfair.
+ */
+function renderFeatureImage(img, isLandscape, showTitle) {
+  const h = isLandscape ? 200 : 280;
+  return `<div style="margin-bottom:10px;overflow:hidden;border-radius:8px;background:#f1f5f9;position:relative;box-shadow:0 6px 24px rgba(0,41,77,0.18),0 0 0 1px rgba(212,175,55,0.15);">
+    <img src="${img.url}" crossorigin="anonymous" style="width:100%;height:${h}px;object-fit:cover;object-position:center;display:block;"/>
+    ${showTitle && img.title ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,41,77,0.85));padding:10px 14px;font-family:'Playfair Display',Georgia,serif;font-size:14px;color:#fff;font-weight:700;">${img.title}</div>` : ''}
+  </div>`;
+}
+
+/**
+ * SMART GALLERY - renderer único baseado em "size".
+ * Sistema decide colunas, alturas e gaps automaticamente.
+ */
+function renderSmartGallery(imgs, cfg, isLandscape) {
+  if (imgs.length === 0) return '';
+  const preset = GALLERY_SIZE_PRESETS[cfg.size] || GALLERY_SIZE_PRESETS.M;
+  const cols = preset.cols;
+  const imgH = preset.imgH[isLandscape ? 'landscape' : 'portrait'];
+  // Gap proporcional ao tamanho (mais "ar" em fotos grandes)
+  const gap = cols === 1 ? 12 : cols === 2 ? 9 : cols === 3 ? 7 : 5;
+
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${gap}px;">
+    ${imgs.map(({url, title}) => renderGalleryImage(url, title, imgH, cfg.showTitles)).join('')}
+  </div>`;
+}
+
+/**
+ * Calcula imagens por página baseado em size e orientação.
+ */
+function getImagesPerPage(size, isLandscape) {
+  const preset = GALLERY_SIZE_PRESETS[size] || GALLERY_SIZE_PRESETS.M;
+  if (preset.onePerPage) return 1;
+  // Rows aproximadas que cabem na altura útil (~210mm portrait, ~140mm landscape)
+  const availableHeight = isLandscape ? 145 : 215; // mm
+  const imgHmm = preset.imgH[isLandscape ? 'landscape' : 'portrait'] * 0.265; // px → mm aprox
+  const rows = Math.max(1, Math.floor(availableHeight / (imgHmm + 4))); // 4mm = gap
+  return preset.cols * rows;
+}
+
+/**
+ * ENTRY POINT: Renderiza páginas da galeria baseado em galleryConfig (Smart).
+ */
+function renderPhotosPageHTML(quote, agency) {
+  agency = agency || loadAgency();
+  const gold = '#d4af37';
+  const cfg = { ...DEFAULT_GALLERY_CONFIG, ...(quote.galleryConfig || {}) };
+  const isLandscape = quote.orientation === 'landscape';
+
+  // Coleta todas as imagens dos serviços
+  const imgs = [];
+  (quote.services || []).forEach(s => (s.images || []).forEach(u => {
+    if (u) imgs.push({ url: u, title: s.title || '' });
+  }));
+  if (imgs.length === 0) return [];
+
+  // Quantas cabem por página
+  const perPg = cfg.autoPageBreak ? getImagesPerPage(cfg.size, isLandscape) : imgs.length;
+
+  // Se featureFirst: a primeira foto fica sozinha como destaque na 1ª página
+  // depois as demais seguem em grid normal
+  const pages = [];
+  let startIdx = 0;
+  let firstPageFeature = '';
+
+  if (cfg.featureFirst && imgs.length > 0) {
+    firstPageFeature = renderFeatureImage(imgs[0], isLandscape, cfg.showTitles);
+    startIdx = 1;
   }
+
+  const remainingImgs = imgs.slice(startIdx);
+  const totalPgs = remainingImgs.length === 0 ? 1 : Math.ceil(remainingImgs.length / perPg) + (cfg.featureFirst && remainingImgs.length > 0 ? 0 : 0);
+
+  // Caso edge: só 1 foto e featureFirst ON
+  if (remainingImgs.length === 0) {
+    const html = buildGalleryPageWrapper(firstPageFeature, quote, agency, gold, 1, 1);
+    pages.push({ orientation: quote.orientation || 'portrait', html });
+    return pages;
+  }
+
+  // Primeira página: feature (se ativo) + resto que couber
+  // Ou apenas grid normal se featureFirst = false
+  let firstChunkSize = perPg;
+  if (cfg.featureFirst) {
+    // Feature ocupa espaço, reduz quantas thumbs cabem
+    firstChunkSize = Math.max(1, Math.floor(perPg / 2));
+  }
+
+  const firstChunk = remainingImgs.slice(0, firstChunkSize);
+  const firstInnerHTML = firstPageFeature + renderSmartGallery(firstChunk, cfg, isLandscape);
+  const totalActualPgs = 1 + Math.ceil((remainingImgs.length - firstChunkSize) / perPg);
+
+  pages.push({
+    orientation: quote.orientation || 'portrait',
+    html: buildGalleryPageWrapper(firstInnerHTML, quote, agency, gold, 1, totalActualPgs)
+  });
+
+  // Páginas seguintes: grid normal sem feature
+  for (let pi = firstChunkSize; pi < remainingImgs.length; pi += perPg) {
+    const block = remainingImgs.slice(pi, pi + perPg);
+    const pgNum = Math.floor((pi - firstChunkSize) / perPg) + 2;
+    const innerHTML = renderSmartGallery(block, cfg, isLandscape);
+    pages.push({
+      orientation: quote.orientation || 'portrait',
+      html: buildGalleryPageWrapper(innerHTML, quote, agency, gold, pgNum, totalActualPgs)
+    });
+  }
+
   return pages;
 }
 
@@ -1235,6 +1436,41 @@ function renderServicePages(s, i, currency, totalSvcs, agency, orient, consultor
   });
 }
 
+/**
+ * Renderiza imagens DENTRO de um serviço usando a Smart Gallery config.
+ * - featureFirst=true: primeira imagem em destaque + restante em grid
+ * - featureFirst=false: todas em grid uniforme baseado em size
+ */
+function renderServiceImagesHTML(imgs, cfg, isLandscape) {
+  if (!imgs || imgs.length === 0) return '';
+  const preset = GALLERY_SIZE_PRESETS[cfg.size] || GALLERY_SIZE_PRESETS.M;
+  const imgH = preset.imgHSvc[isLandscape ? 'landscape' : 'portrait'];
+  const featH = preset.featureH[isLandscape ? 'landscape' : 'portrait'];
+  const imgStyle = `object-fit:cover;object-position:center;display:block;`;
+
+  // Caso 1: só 1 imagem - sempre grande
+  if (imgs.length === 1) {
+    return `<img src="${imgs[0]}" style="width:100%;height:${featH}px;${imgStyle}" crossorigin="anonymous"/>`;
+  }
+
+  // Caso 2: featureFirst ativo + 2+ imagens
+  if (cfg.featureFirst) {
+    const cols = Math.min(imgs.length - 1, preset.cols, 3);
+    const thumbs = imgs.slice(1);
+    return `
+      <img src="${imgs[0]}" style="width:100%;height:${featH}px;${imgStyle};margin-bottom:4px;" crossorigin="anonymous"/>
+      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;">
+        ${thumbs.map(u=>`<img src="${u}" style="width:100%;height:${imgH}px;${imgStyle}" crossorigin="anonymous"/>`).join('')}
+      </div>`;
+  }
+
+  // Caso 3: featureFirst desativado - grid uniforme baseado em size
+  const cols = Math.min(imgs.length, preset.cols, 3);
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;">
+    ${imgs.map(u=>`<img src="${u}" style="width:100%;height:${imgH}px;${imgStyle}" crossorigin="anonymous"/>`).join('')}
+  </div>`;
+}
+
 function renderServiceHTML(s,i,currency,totalSvcs,agency,orient,consultorName){
   agency = agency || loadAgency();
   const gold='#d4af37';
@@ -1243,24 +1479,9 @@ function renderServiceHTML(s,i,currency,totalSvcs,agency,orient,consultorName){
   const h = isLandscape?'210mm':'297mm';
   const renderDesc = t => { if(!t) return '<em style="color:#94a3b8">Descrição do serviço...</em>'; return t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>'); };
 
-  let imgsHTML = '';
-  const imgs = s.images || [];
-  const imgStyle = `object-fit:cover;object-position:center;display:block;`;
-  if(imgs.length === 1){
-    imgsHTML = `<img src="${imgs[0]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>`;
-  } else if(imgs.length === 2){
-    imgsHTML = `<div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;">
-      <img src="${imgs[0]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>
-      <img src="${imgs[1]}" style="width:100%;height:${isLandscape?'160px':'200px'};${imgStyle}" crossorigin="anonymous"/>
-    </div>`;
-  } else if(imgs.length >= 3){
-    imgsHTML = `
-      <img src="${imgs[0]}" style="width:100%;height:${isLandscape?'110px':'150px'};${imgStyle};margin-bottom:4px;" crossorigin="anonymous"/>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <img src="${imgs[1]}" style="width:100%;height:${isLandscape?'75px':'95px'};${imgStyle}" crossorigin="anonymous"/>
-        <img src="${imgs[2]}" style="width:100%;height:${isLandscape?'75px':'95px'};${imgStyle}" crossorigin="anonymous"/>
-      </div>`;
-  }
+  // Bloco 3 rev.2: imagens do serviço seguem Smart Gallery config
+  const galleryCfg = s._galleryCfg || DEFAULT_GALLERY_CONFIG;
+  const imgsHTML = renderServiceImagesHTML(s.images || [], galleryCfg, isLandscape);
 
   const letterheadHTML = `<div style="display:flex;align-items:center;gap:8px;padding:7px 30px;border-bottom:2px solid ${gold};background:#fff;">
     ${agency.logoUrl?`<img src="${agency.logoUrl}" style="height:36px;object-fit:contain;object-position:center;" crossorigin="anonymous"/>`:`<div style="width:36px;height:36px;border-radius:3px;background:${gold};display:flex;align-items:center;justify-content:center;color:#00294d;font-weight:900;font-size:10px;font-family:Georgia,serif;">ET</div>`}
@@ -1795,29 +2016,38 @@ function App(){
                 </div>
 
                 <hr className="et-divider" style={{marginTop:14}}/>
-                <div className="et-section-title"><span>🖼️</span> Galeria no PDF</div>
-                <div style={{fontSize:'0.66rem',color:'#4a6580',marginBottom:10}}>Aparece após a capa — reúne a imagem de capa e fotos dos serviços</div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:6}}>
-                  <div>
-                    <label className="et-label">Colunas</label>
-                    <select className="et-select"
-                      value={(quote.galleryConfig||{columns:3}).columns}
-                      onChange={e=>upQ({galleryConfig:{...(quote.galleryConfig||{fixedHeight:true}),columns:Number(e.target.value)}})}>
-                      <option value={2}>2 colunas</option>
-                      <option value={3}>3 colunas</option>
-                      <option value={4}>4 colunas</option>
-                    </select>
-                  </div>
-                  <div style={{display:'flex',alignItems:'flex-end',paddingBottom:4}}>
-                    <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:'0.82rem',color:'#94a3b8',userSelect:'none'}}>
-                      <input type="checkbox"
-                        checked={(quote.galleryConfig||{fixedHeight:true}).fixedHeight!==false}
-                        onChange={e=>upQ({galleryConfig:{...(quote.galleryConfig||{columns:3}),fixedHeight:e.target.checked}})}
-                        style={{cursor:'pointer',width:14,height:14,accentColor:gold}}/>
-                      Altura fixa
-                    </label>
-                  </div>
+                <div className="et-section-title"><span>🖼️</span> Galeria de Fotos</div>
+                <div style={{fontSize:'0.66rem',color:'#4a6580',marginBottom:12}}>Aparece no final do PDF — sistema decide colunas e alturas automaticamente</div>
+
+                {/* === SLIDER DE TAMANHO === */}
+                <label className="et-label">📏 Tamanho das fotos</label>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:5,marginBottom:14}}>
+                  {GALLERY_SIZE_ORDER.map(sz=>{
+                    const cfg = quote.galleryConfig||DEFAULT_GALLERY_CONFIG;
+                    const isActive = (cfg.size||'M')===sz;
+                    const preset = GALLERY_SIZE_PRESETS[sz];
+                    return (
+                      <button key={sz} onClick={()=>upQ({galleryConfig:{...cfg,size:sz}})}
+                        style={{background:isActive?'rgba(212,175,55,0.16)':'#071e38',border:`2px solid ${isActive?gold:'#1e3a5f'}`,borderRadius:8,padding:'0.55rem 0.3rem',cursor:'pointer',transition:'all 0.18s',textAlign:'center'}}>
+                        <div style={{color:isActive?gold:'#94a3b8',fontWeight:900,fontSize:'0.85rem',marginBottom:2}}>{sz}</div>
+                        <div style={{fontSize:'0.58rem',color:isActive?'#d4af37':'#4a6580',fontWeight:600}}>{preset.label}</div>
+                        <div style={{fontSize:'0.55rem',color:'#4a6580',marginTop:1}}>{preset.desc}</div>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* === TOGGLE DESTAQUE === */}
+                <label style={{display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer',padding:'0.65rem 0.8rem',background:(quote.galleryConfig?.featureFirst)?'rgba(212,175,55,0.08)':'#071e38',border:`1.5px solid ${(quote.galleryConfig?.featureFirst)?gold:'#1e3a5f'}`,borderRadius:9,userSelect:'none',transition:'all 0.18s'}}>
+                  <input type="checkbox"
+                    checked={!!(quote.galleryConfig?.featureFirst)}
+                    onChange={e=>upQ({galleryConfig:{...(quote.galleryConfig||DEFAULT_GALLERY_CONFIG),featureFirst:e.target.checked}})}
+                    style={{cursor:'pointer',width:15,height:15,accentColor:gold,marginTop:2}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'0.82rem',fontWeight:700,color:(quote.galleryConfig?.featureFirst)?gold:'#e2e8f0',marginBottom:2}}>⭐ Destacar primeira foto</div>
+                    <div style={{fontSize:'0.66rem',color:'#94a3b8',lineHeight:1.4}}>A primeira imagem aparece em destaque cinematográfico no topo. Ideal para destinos com foto-bandeira marcante.</div>
+                  </div>
+                </label>
               </Accordion>
 
               {/* ============ ACCORDION 2: DADOS DA VIAGEM ============ */}
@@ -2495,9 +2725,8 @@ function PDFPreview({quote,total,agency,user}){
 
       {quote.services.map((s,i)=>{
         const imgs = s.images || [];
-        const imgH = isLandscape ? 110 : 160;
-        const imgH3 = isLandscape ? 80 : 120;
-        const imgH3sm = isLandscape ? 55 : 75;
+        // Bloco 3 rev.2: imagens dos serviços herdam galleryConfig
+        const galleryCfg = {...DEFAULT_GALLERY_CONFIG, ...(quote.galleryConfig||{})};
         return (
           <div key={s.id} style={{...pageStyle,background:'#fff',display:'flex',flexDirection:'column'}}>
             {/* Letterhead */}
@@ -2506,22 +2735,7 @@ function PDFPreview({quote,total,agency,user}){
               <div style={{fontSize:'0.55rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em'}}>{agency.name||'Expert Turismo'} · {agency.tagline||''}</div>
               <div style={{marginLeft:'auto',fontSize:'0.55rem',color:'#cbd5e1'}}>{i+1} / {quote.services.length}</div>
             </div>
-            {imgs.length === 1 && <img src={imgs[0]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>}
-            {imgs.length === 2 && (
-              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:3}}>
-                <img src={imgs[0]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>
-                <img src={imgs[1]} alt="" style={{width:'100%',height:imgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>
-              </div>
-            )}
-            {imgs.length >= 3 && (
-              <div>
-                <img src={imgs[0]} alt="" style={{width:'100%',height:imgH3,objectFit:'cover',objectPosition:'center',display:'block',marginBottom:3}}/>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:3}}>
-                  <img src={imgs[1]} alt="" style={{width:'100%',height:imgH3sm,objectFit:'cover',objectPosition:'center',display:'block'}}/>
-                  <img src={imgs[2]} alt="" style={{width:'100%',height:imgH3sm,objectFit:'cover',objectPosition:'center',display:'block'}}/>
-                </div>
-              </div>
-            )}
+            <ServiceImagesPreview imgs={imgs} cfg={galleryCfg} isLandscape={isLandscape}/>
             {imgs.length>0 && <div style={{width:'100%',height:2,background:`linear-gradient(90deg,${gold},rgba(212,175,55,0.15) 70%,transparent)`}}/>}
             <div style={{padding:'0.9rem 1.4rem',flex:1,display:'flex',flexDirection:'column'}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}>
@@ -2660,7 +2874,143 @@ function PDFPreview({quote,total,agency,user}){
           </div>
         </div>
       </div>
+
+      {/* ============ GALERIA DE FOTOS (Live Preview) ============ */}
+      <GalleryPreview quote={quote} agency={agency} pageStyle={pageStyle} isLandscape={isLandscape} gold={gold}/>
     </div>
+  );
+}
+
+// ============ SERVICE IMAGES PREVIEW COMPONENT ============
+// Renderiza imagens DENTRO de um serviço (preview), seguindo Smart Gallery config.
+// Espelha renderServiceImagesHTML do PDF.
+function ServiceImagesPreview({imgs, cfg, isLandscape}){
+  if(!imgs || imgs.length===0) return null;
+  const preset = GALLERY_SIZE_PRESETS[cfg.size] || GALLERY_SIZE_PRESETS.M;
+  // Preview usa altura proporcional (~70% das alturas do PDF que são em px de PDF)
+  const ratio = 0.70;
+  const imgH = Math.round(preset.imgHSvc[isLandscape?'landscape':'portrait'] * ratio);
+  const featH = Math.round(preset.featureH[isLandscape?'landscape':'portrait'] * ratio);
+  const imgStyle = {width:'100%',objectFit:'cover',objectPosition:'center',display:'block'};
+
+  // 1 imagem: sempre grande
+  if(imgs.length===1){
+    return <img src={imgs[0]} alt="" style={{...imgStyle,height:featH}}/>;
+  }
+
+  // featureFirst + 2+ imagens
+  if(cfg.featureFirst){
+    const cols = Math.min(imgs.length-1, preset.cols, 3);
+    const thumbs = imgs.slice(1);
+    return (
+      <div>
+        <img src={imgs[0]} alt="" style={{...imgStyle,height:featH,marginBottom:3}}/>
+        <div style={{display:'grid',gridTemplateColumns:`repeat(${cols},1fr)`,gap:3}}>
+          {thumbs.map((u,j)=>(<img key={j} src={u} alt="" style={{...imgStyle,height:imgH}}/>))}
+        </div>
+      </div>
+    );
+  }
+
+  // featureFirst desativado: grid uniforme
+  const cols = Math.min(imgs.length, preset.cols, 3);
+  return (
+    <div style={{display:'grid',gridTemplateColumns:`repeat(${cols},1fr)`,gap:3}}>
+      {imgs.map((u,j)=>(<img key={j} src={u} alt="" style={{...imgStyle,height:imgH}}/>))}
+    </div>
+  );
+}
+
+// ============ GALLERY PREVIEW COMPONENT ============
+// Renderiza ao vivo a galeria conforme galleryConfig (size + featureFirst).
+// Espelha o que sai no PDF via renderPhotosPageHTML.
+function GalleryPreview({quote, agency, pageStyle, isLandscape, gold}){
+  // Coleta imagens
+  const imgs = [];
+  (quote.services||[]).forEach(s=>(s.images||[]).forEach(url=>{
+    if(url) imgs.push({url, title:s.title||''});
+  }));
+  if(imgs.length===0) return null;
+
+  const cfg = {...DEFAULT_GALLERY_CONFIG, ...(quote.galleryConfig||{})};
+  const preset = GALLERY_SIZE_PRESETS[cfg.size] || GALLERY_SIZE_PRESETS.M;
+  const cols = preset.cols;
+  // Altura no preview é proporcional (não em px do PDF, mas em ratio visual)
+  const previewImgH = isLandscape
+    ? (cfg.size==='XL'?180:cfg.size==='L'?130:cfg.size==='M'?90:cfg.size==='S'?60:42)
+    : (cfg.size==='XL'?240:cfg.size==='L'?150:cfg.size==='M'?105:cfg.size==='S'?75:55);
+  const gap = cols===1?10:cols===2?7:cols===3?5:4;
+
+  // Se featureFirst: primeira sai destacada, resto em grid
+  const featureImg = cfg.featureFirst ? imgs[0] : null;
+  const gridImgs = cfg.featureFirst ? imgs.slice(1) : imgs;
+
+  // Paginação simulada (1 página por chunk de perPage)
+  const perPage = preset.onePerPage ? 1 : Math.max(cols * (isLandscape?2:3), cols*2);
+  const pages = [];
+  if(featureImg && gridImgs.length===0){
+    pages.push({feature: featureImg, items: []});
+  } else if(featureImg){
+    // Primeira pág: feature + chunk reduzido
+    const firstChunkSize = Math.max(1, Math.floor(perPage/2));
+    pages.push({feature: featureImg, items: gridImgs.slice(0, firstChunkSize)});
+    for(let i=firstChunkSize;i<gridImgs.length;i+=perPage){
+      pages.push({feature:null, items: gridImgs.slice(i,i+perPage)});
+    }
+  } else {
+    for(let i=0;i<gridImgs.length;i+=perPage){
+      pages.push({feature:null, items: gridImgs.slice(i,i+perPage)});
+    }
+  }
+
+  return (
+    <React.Fragment>
+      {pages.map((pg, pageIdx)=>(
+        <div key={pageIdx} style={{...pageStyle,background:'#fff',display:'flex',flexDirection:'column'}}>
+          {/* Letterhead */}
+          <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',borderBottom:`2px solid ${gold}`}}>
+            <LogoBadge size={18} agency={agency}/>
+            <div style={{fontSize:'0.55rem',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em'}}>{agency.name||'Expert Turismo'} · Galeria do Destino</div>
+            {pages.length>1 && <div style={{marginLeft:'auto',fontSize:'0.55rem',color:'#94a3b8'}}>{pageIdx+1} / {pages.length}</div>}
+          </div>
+
+          {/* Header */}
+          <div style={{padding:'10px 14px',borderBottom:'1.5px solid rgba(212,175,55,0.3)'}}>
+            <div style={{fontSize:'0.55rem',textTransform:'uppercase',letterSpacing:'0.12em',color:'#94a3b8',marginBottom:1}}>Galeria do Destino</div>
+            <h2 style={{fontSize:'1rem',fontWeight:900,fontFamily:'Playfair Display,Georgia,serif',color:'#00294d',margin:0}}>{quote.trip.destination||'Destino'}</h2>
+          </div>
+
+          {/* Conteúdo */}
+          <div style={{flex:1,padding:'10px 14px',overflow:'hidden'}}>
+            {/* Feature image */}
+            {pg.feature && (
+              <div style={{marginBottom:8,borderRadius:6,overflow:'hidden',background:'#f1f5f9',position:'relative',boxShadow:'0 4px 12px rgba(0,41,77,0.18)'}}>
+                <img src={pg.feature.url} style={{width:'100%',height:isLandscape?140:160,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+                {cfg.showTitles && pg.feature.title && (
+                  <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,41,77,0.85))',padding:'6px 10px',fontFamily:'Playfair Display,Georgia,serif',fontSize:'0.78rem',color:'#fff',fontWeight:700}}>{pg.feature.title}</div>
+                )}
+              </div>
+            )}
+            {/* Grid */}
+            {pg.items.length>0 && (
+              <div style={{display:'grid',gridTemplateColumns:`repeat(${cols},1fr)`,gap}}>
+                {pg.items.map((img,i)=>(
+                  <div key={i} style={{borderRadius:4,overflow:'hidden',background:'#f1f5f9',position:'relative',boxShadow:'0 1px 3px rgba(0,41,77,0.08)'}}>
+                    <img src={img.url} style={{width:'100%',height:previewImgH,objectFit:'cover',objectPosition:'center',display:'block'}}/>
+                    {cfg.showTitles && img.title && (
+                      <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,41,77,0.75))',padding:'3px 5px',fontSize:'0.52rem',color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',fontWeight:500}}>{img.title}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer gold bar */}
+          <div style={{height:3,background:gold}}/>
+        </div>
+      ))}
+    </React.Fragment>
   );
 }
 
