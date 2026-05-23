@@ -3,3 +3,17 @@ CONTEXT.md
 .env
 .env.local
 .env*.local
+
+# Local Claude Code config
+.claude/
+
+# Backups locais
+*.backup-*
+*.bak
+
+# Logs locais
+doc-sync.log
+*.log
+
+# Assets nao usados
+logo-expert.svg
